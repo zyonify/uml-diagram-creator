@@ -2,7 +2,9 @@
  * Render class diagram as SVG
  */
 
-export function renderClassDiagram(data) {
+import { applyAspectRatio } from '../stores/aspectRatio.js';
+
+export function renderClassDiagram(data, aspectRatio = 'auto') {
   if (data.error) {
     return { error: data.error };
   }
@@ -234,5 +236,16 @@ export function renderClassDiagram(data) {
 
   svg += '</svg>';
 
-  return { svg, width, height };
+  // Apply aspect ratio constraints
+  const adjustedDimensions = applyAspectRatio(width, height, aspectRatio);
+
+  // Update SVG dimensions if aspect ratio was applied
+  if (adjustedDimensions.width !== width || adjustedDimensions.height !== height) {
+    svg = svg.replace(
+      `<svg width="${width}" height="${height}"`,
+      `<svg width="${adjustedDimensions.width}" height="${adjustedDimensions.height}" viewBox="0 0 ${width} ${height}"`
+    );
+  }
+
+  return { svg, width: adjustedDimensions.width, height: adjustedDimensions.height };
 }

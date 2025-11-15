@@ -1,6 +1,7 @@
 <script>
   import { diagramText, diagramType } from '../stores/diagram.js';
   import { currentTheme, themes, applyThemeToSVG } from '../stores/theme.js';
+  import { currentAspectRatio, aspectRatios } from '../stores/aspectRatio.js';
   import { parseSequenceDiagram } from '../parsers/sequence.js';
   import { parseClassDiagram } from '../parsers/class.js';
   import { renderSequenceDiagram } from '../renderers/sequence.js';
@@ -14,11 +15,19 @@
   let lineCount = 0;
   let elementCount = 0;
   let selectedTheme = 'default';
+  let selectedAspectRatio = 'auto';
 
   currentTheme.subscribe(v => {
     selectedTheme = v;
     if (svgContent) {
       updatePreview(); // Re-render with new theme
+    }
+  });
+
+  currentAspectRatio.subscribe(v => {
+    selectedAspectRatio = v;
+    if (svgContent) {
+      updatePreview(); // Re-render with new aspect ratio
     }
   });
 
@@ -67,7 +76,7 @@
           svgContent = '';
           elementCount = 0;
         } else {
-          const result = renderSequenceDiagram(parsed);
+          const result = renderSequenceDiagram(parsed, selectedAspectRatio);
           if (result.error) {
             error = getHelpfulError(result.error, 'sequence');
             svgContent = '';
@@ -86,7 +95,7 @@
           svgContent = '';
           elementCount = 0;
         } else {
-          const result = renderClassDiagram(parsed);
+          const result = renderClassDiagram(parsed, selectedAspectRatio);
           if (result.error) {
             error = getHelpfulError(result.error, 'class');
             svgContent = '';
@@ -147,6 +156,11 @@
   <div class="preview-header">
     <h3>Preview</h3>
     <div class="header-controls">
+      <select bind:value={selectedAspectRatio} on:change={(e) => currentAspectRatio.set(e.target.value)} class="aspect-select" title="Set aspect ratio for export">
+        {#each Object.entries(aspectRatios) as [key, ratio]}
+          <option value={key}>{ratio.name}</option>
+        {/each}
+      </select>
       <select bind:value={selectedTheme} on:change={(e) => currentTheme.set(e.target.value)} class="theme-select" title="Change color theme">
         {#each Object.entries(themes) as [key, theme]}
           <option value={key}>{theme.name}</option>
@@ -259,6 +273,7 @@
     text-align: center;
   }
 
+  .aspect-select,
   .theme-select {
     padding: 4px 10px;
     font-size: 12px;
@@ -269,6 +284,7 @@
     cursor: pointer;
   }
 
+  .aspect-select:hover,
   .theme-select:hover {
     border-color: #999;
   }
