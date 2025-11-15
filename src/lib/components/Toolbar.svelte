@@ -1,12 +1,22 @@
 <script>
   import { exportAsSVG, exportAsPNG, exportAsPDF } from '../utils/export.js';
-  import { saveDiagram } from '../stores/diagram.js';
+  import { saveDiagram, diagramText } from '../stores/diagram.js';
+  import { onMount } from 'svelte';
 
   export let getSVG;
   export let diagramType;
 
   let showSaveDialog = false;
   let diagramName = '';
+
+  // Listen for keyboard shortcut save event
+  onMount(() => {
+    const handleSaveShortcut = () => {
+      handleSave();
+    };
+    window.addEventListener('save-diagram', handleSaveShortcut);
+    return () => window.removeEventListener('save-diagram', handleSaveShortcut);
+  });
 
   function handleExport(format) {
     const svg = getSVG();
@@ -30,6 +40,12 @@
     }
   }
 
+  function handleNew() {
+    if (confirm('Clear current diagram? (Unsaved changes will be lost)')) {
+      diagramText.set('');
+    }
+  }
+
   function handleSave() {
     showSaveDialog = true;
   }
@@ -46,7 +62,7 @@
       return;
     }
 
-    // Get current text from textarea (we'll need to pass this)
+    // Get current text from textarea
     const text = document.querySelector('.editor')?.value || '';
     saveDiagram(diagramName, diagramType, text);
 
@@ -59,6 +75,15 @@
     showSaveDialog = false;
     diagramName = '';
   }
+
+  // Handle Enter key in save dialog
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') {
+      confirmSave();
+    } else if (e.key === 'Escape') {
+      cancelSave();
+    }
+  }
 </script>
 
 <div class="toolbar">
@@ -67,19 +92,23 @@
   </div>
 
   <div class="toolbar-section">
-    <button class="toolbar-btn" on:click={handleSave}>
+    <button class="toolbar-btn" on:click={handleNew} title="Clear diagram (Ctrl+N)">
+      📄 New
+    </button>
+
+    <button class="toolbar-btn" on:click={handleSave} title="Save diagram (Ctrl+S)">
       💾 Save
     </button>
 
     <div class="export-group">
       <span class="export-label">Export:</span>
-      <button class="toolbar-btn export-btn" on:click={() => handleExport('svg')}>
+      <button class="toolbar-btn export-btn" on:click={() => handleExport('svg')} title="Export as SVG">
         SVG
       </button>
-      <button class="toolbar-btn export-btn" on:click={() => handleExport('png')}>
+      <button class="toolbar-btn export-btn" on:click={() => handleExport('png')} title="Export as PNG">
         PNG
       </button>
-      <button class="toolbar-btn export-btn" on:click={() => handleExport('pdf')}>
+      <button class="toolbar-btn export-btn" on:click={() => handleExport('pdf')} title="Export as PDF">
         PDF
       </button>
     </div>
@@ -88,14 +117,16 @@
 
 {#if showSaveDialog}
   <div class="modal-overlay" on:click={cancelSave}>
-    <div class="modal" on:click|stopPropagation>
+    <div class="modal" on:click|stopPropagation on:keydown={handleKeyDown}>
       <h3>Save Diagram</h3>
       <input
         type="text"
         bind:value={diagramName}
         placeholder="Enter diagram name"
         class="name-input"
+        autofocus
       />
+      <div class="modal-hint">Press Enter to save, Esc to cancel</div>
       <div class="modal-actions">
         <button class="btn-cancel" on:click={cancelSave}>Cancel</button>
         <button class="btn-save" on:click={confirmSave}>Save</button>
@@ -200,6 +231,12 @@
   .name-input:focus {
     outline: none;
     border-color: #667eea;
+  }
+
+  .modal-hint {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 15px;
   }
 
   .modal-actions {

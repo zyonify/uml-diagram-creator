@@ -20,6 +20,21 @@
 - [x] Responsive design for mobile
 - [x] Create Vercel deployment config
 
+### Editor Improvements (v1.1)
+- [x] Add line numbers to editor
+- [x] Implement syntax highlighting with VS Code-like dark theme
+- [x] Add keyboard shortcuts (Tab for indent, Ctrl+S for save)
+- [x] Add "New" button to clear diagram
+- [x] Add tooltips for all buttons
+- [x] Improve editor styling with dark theme
+
+### Preview Improvements (v1.1)
+- [x] Add zoom controls (zoom in/out/reset)
+- [x] Add status bar showing line count and element count
+- [x] Improve error messages with helpful examples
+- [x] Add visual feedback for valid diagrams
+- [x] Better empty state with icon
+
 ## 📋 TODO
 
 ### Phase 3: Storage & UX
