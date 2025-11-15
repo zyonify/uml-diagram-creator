@@ -21,6 +21,25 @@
     updatePreview();
   });
 
+  // Count messages recursively in sequence diagram elements
+  function countMessages(elements) {
+    let count = 0;
+    for (const element of elements) {
+      if (element.type === 'message') {
+        count++;
+      } else if (element.type === 'fragment') {
+        if (element.kind === 'alt' && element.alternatives?.length > 0) {
+          for (const alt of element.alternatives) {
+            count += countMessages(alt.elements);
+          }
+        } else {
+          count += countMessages(element.elements || []);
+        }
+      }
+    }
+    return count;
+  }
+
   function updatePreview() {
     if (!currentText.trim()) {
       svgContent = '';
@@ -47,7 +66,7 @@
           } else {
             svgContent = result.svg;
             error = '';
-            elementCount = parsed.messages?.length || 0;
+            elementCount = countMessages(parsed.elements || []);
           }
         }
       } else if (currentText.trim().toLowerCase().startsWith('class:')) {
@@ -88,7 +107,7 @@
     let helpText = errorMsg;
 
     if (type === 'sequence') {
-      helpText += '\n\nExample:\nsequence:\n  Actor -> Server: Message\n  Server --> Actor: Response';
+      helpText += '\n\nExample:\nsequence:\n  Actor -> Server: Message\n  loop [condition]\n    Server -> DB: Query\n  end\n  Server --> Actor: Response';
     } else if (type === 'class') {
       helpText += '\n\nExample:\nclass:\n  ClassName {\n    +field: type\n    +method()\n  }';
     } else {

@@ -49,6 +49,32 @@ sequence:
   Server --> User: Login Success
 ```
 
+### Sequence Diagram with Conditionals
+
+```
+sequence:
+  User -> Server: Login
+  alt [valid credentials]
+    Server -> Database: Get User
+    Database --> Server: User Data
+    Server --> User: Success
+  else [invalid]
+    Server --> User: Failed
+  end
+```
+
+### Sequence Diagram with Loops
+
+```
+sequence:
+  User -> Server: Get Items
+  loop [for each item]
+    Server -> Database: Query Item
+    Database --> Server: Item Data
+  end
+  Server --> User: All Items
+```
+
 ### Class Diagram
 
 ```
@@ -70,10 +96,17 @@ class:
 
 ### Sequence Diagrams
 
+#### Basic Messages
 - Start with `sequence:`
 - Use `->` for requests
 - Use `-->` for responses
 - Format: `From -> To: Message`
+
+#### Control Structures
+- **Loop**: `loop [condition]` ... `end`
+- **If/Else**: `alt [condition]` ... `else [condition]` ... `end`
+- **Optional**: `opt [condition]` ... `end`
+- **Parallel**: `par` ... `end`
 
 ### Class Diagrams
 

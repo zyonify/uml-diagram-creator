@@ -72,17 +72,21 @@
       .replace(/>/g, '&gt;')
       // Highlight keywords
       .replace(/^(sequence|class):/gm, '<span class="keyword">$1:</span>')
+      // Highlight control structures
+      .replace(/^(loop|alt|opt|par|else|end)\b/gm, '<span class="keyword">$1</span>')
       // Highlight extends
       .replace(/\bextends\b/g, '<span class="keyword">extends</span>')
       // Highlight arrows
       .replace(/(--?>|<--?)/g, '<span class="arrow">$1</span>')
+      // Highlight conditions in square brackets
+      .replace(/\[([^\]]+)\]/g, '<span class="condition">[$1]</span>')
       // Highlight visibility modifiers
       .replace(/^(\s*)([+\-#])/gm, '$1<span class="modifier">$2</span>')
-      // Highlight types
-      .replace(/:\s*(\w+)/g, ': <span class="type">$1</span>')
+      // Highlight types (but not inside conditions which are already highlighted)
+      .replace(/:\s*(\w+)(?![^\<]*\<\/span\>)/g, ': <span class="type">$1</span>')
       // Highlight braces
       .replace(/([{}])/g, '<span class="brace">$1</span>')
-      // Highlight comments (if we add them later)
+      // Highlight comments
       .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>');
 
     highlightedElement.innerHTML = highlighted + '\n';
@@ -97,9 +101,20 @@
   const examples = {
     sequence: `sequence:
   User -> Server: Login Request
-  Server -> Database: Validate Credentials
-  Database --> Server: User Data
-  Server --> User: Login Success`,
+  alt [valid credentials]
+    Server -> Database: Get User
+    Database --> Server: User Data
+    Server --> User: Login Success
+  else [invalid]
+    Server --> User: Login Failed
+  end`,
+    sequenceLoop: `sequence:
+  User -> Server: Get Items
+  loop [for each item]
+    Server -> Database: Query Item
+    Database --> Server: Item Data
+  end
+  Server --> User: All Items`,
     class: `class:
   User {
     +id: string
@@ -126,8 +141,9 @@
       <span class="shortcut-hint">Ctrl+S to save • Tab for indent</span>
     </div>
     <div class="examples">
-      <button on:click={() => loadExample('sequence')}>Sequence Example</button>
-      <button on:click={() => loadExample('class')}>Class Example</button>
+      <button on:click={() => loadExample('sequence')}>If/Else</button>
+      <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
+      <button on:click={() => loadExample('class')}>Class</button>
     </div>
   </div>
   <div class="editor-wrapper">
@@ -294,5 +310,9 @@
   :global(.syntax-highlight .comment) {
     color: #6a9955;
     font-style: italic;
+  }
+
+  :global(.syntax-highlight .condition) {
+    color: #ce9178;
   }
 </style>

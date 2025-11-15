@@ -35,6 +35,16 @@
 - [x] Add visual feedback for valid diagrams
 - [x] Better empty state with icon
 
+### Control Structures (v1.2)
+- [x] Add support for loops in sequence diagrams (`loop [condition]` ... `end`)
+- [x] Add support for if/else conditionals (`alt [condition]` ... `else` ... `end`)
+- [x] Add support for optional flows (`opt [condition]` ... `end`)
+- [x] Add support for parallel execution (`par` ... `end`)
+- [x] Render fragments with proper UML boxes and labels
+- [x] Syntax highlighting for control structure keywords
+- [x] Update examples to showcase control structures
+- [x] Nested control structures support
+
 ## 📋 TODO
 
 ### Phase 3: Storage & UX

@@ -1,10 +1,11 @@
 /**
- * Parse sequence diagram syntax
+ * Parse sequence diagram syntax with control structures
  * Format:
  * sequence:
  *   Actor -> Server: Request
- *   Server -> Database: Query
- *   Database --> Server: Data
+ *   loop [condition]
+ *     Server -> Database: Query
+ *   end
  *   Server --> Actor: Response
  */
 
@@ -16,33 +17,117 @@ export function parseSequenceDiagram(text) {
   }
 
   const participants = new Set();
-  const messages = [];
+  const elements = []; // Can be messages or fragments
+  const fragmentStack = []; // Stack to track nested fragments
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
 
-    // Match: Actor -> Server: Message or Actor --> Server: Message
-    const match = line.match(/^(.+?)\s*(-->?)\s*(.+?):\s*(.+)$/);
+    // Check for fragment start (loop, alt, opt, par)
+    const fragmentMatch = line.match(/^(loop|alt|opt|par)(?:\s+\[(.+)\])?$/i);
+    if (fragmentMatch) {
+      const fragment = {
+        type: 'fragment',
+        kind: fragmentMatch[1].toLowerCase(),
+        condition: fragmentMatch[2] || '',
+        elements: [],
+        alternatives: [] // For alt/else
+      };
 
-    if (match) {
-      const [, from, arrow, to, message] = match;
+      if (fragmentStack.length > 0) {
+        // Nested fragment
+        const parent = fragmentStack[fragmentStack.length - 1];
+        if (parent.currentAlt) {
+          parent.currentAlt.elements.push(fragment);
+        } else {
+          parent.elements.push(fragment);
+        }
+      } else {
+        elements.push(fragment);
+      }
+
+      fragmentStack.push(fragment);
+      continue;
+    }
+
+    // Check for else (only valid in alt fragments)
+    const elseMatch = line.match(/^else(?:\s+\[(.+)\])?$/i);
+    if (elseMatch) {
+      if (fragmentStack.length === 0 || fragmentStack[fragmentStack.length - 1].kind !== 'alt') {
+        return { error: `'else' can only be used inside 'alt' blocks (line ${i + 1})` };
+      }
+
+      const altFragment = fragmentStack[fragmentStack.length - 1];
+      const alternative = {
+        condition: elseMatch[1] || 'else',
+        elements: []
+      };
+      altFragment.alternatives.push(alternative);
+      altFragment.currentAlt = alternative;
+      continue;
+    }
+
+    // Check for fragment end
+    if (line.toLowerCase() === 'end') {
+      if (fragmentStack.length === 0) {
+        return { error: `'end' without matching fragment start (line ${i + 1})` };
+      }
+
+      const fragment = fragmentStack.pop();
+
+      // For alt fragments, if we have alternatives, move main elements to first alternative
+      if (fragment.kind === 'alt' && fragment.alternatives.length > 0) {
+        if (fragment.elements.length > 0) {
+          fragment.alternatives.unshift({
+            condition: fragment.condition,
+            elements: fragment.elements
+          });
+          fragment.elements = [];
+        }
+      }
+
+      delete fragment.currentAlt;
+      continue;
+    }
+
+    // Match message: Actor -> Server: Message or Actor --> Server: Message
+    const messageMatch = line.match(/^(.+?)\s*(-->?)\s*(.+?):\s*(.+)$/);
+    if (messageMatch) {
+      const [, from, arrow, to, message] = messageMatch;
       const fromTrimmed = from.trim();
       const toTrimmed = to.trim();
 
       participants.add(fromTrimmed);
       participants.add(toTrimmed);
 
-      messages.push({
+      const msg = {
+        type: 'message',
         from: fromTrimmed,
         to: toTrimmed,
         message: message.trim(),
-        type: arrow === '-->' ? 'response' : 'request'
-      });
+        messageType: arrow === '-->' ? 'response' : 'request'
+      };
+
+      // Add to current context (fragment or root)
+      if (fragmentStack.length > 0) {
+        const currentFragment = fragmentStack[fragmentStack.length - 1];
+        if (currentFragment.currentAlt) {
+          currentFragment.currentAlt.elements.push(msg);
+        } else {
+          currentFragment.elements.push(msg);
+        }
+      } else {
+        elements.push(msg);
+      }
     }
+  }
+
+  if (fragmentStack.length > 0) {
+    return { error: `Unclosed fragment: '${fragmentStack[fragmentStack.length - 1].kind}' (missing 'end')` };
   }
 
   return {
     participants: Array.from(participants),
-    messages
+    elements
   };
 }
