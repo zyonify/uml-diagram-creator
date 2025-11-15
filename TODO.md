@@ -58,6 +58,12 @@
 - [x] **File operations module** - Centralized import/export utilities
 - [x] **Theme system** - SVG recoloring with theme store
 
+### Deployment Preparation (v1.4)
+- [x] **Enhanced Vercel config** - Added SPA routing support for shareable links
+- [x] **Production build** - Tested and optimized (25 KB gzipped)
+- [x] **Deployment guide** - Comprehensive DEPLOYMENT.md with multiple platforms
+- [x] **Updated README** - Added deployment section with quick start
+
 ## 📋 TODO
 
 ### Phase 3: Storage & UX
@@ -65,10 +71,10 @@
 - [ ] Add saved diagrams sidebar/panel
 
 ### Phase 4: Polish & Deploy
-- [ ] Add dark/light theme toggle
+- [ ] Add dark/light theme toggle (for UI, not diagrams - diagrams already have 6 themes)
 - [ ] Performance optimization
-- [ ] Deploy to Vercel
-- [ ] Add documentation/help section
+- [x] Deployment ready (comprehensive guide in DEPLOYMENT.md)
+- [ ] Add documentation/help section (in-app help)
 - [ ] Add custom icon/favicon
 
 ## 🐛 Known Issues

@@ -135,20 +135,17 @@ class:
 
 ## Deployment
 
-This app can be deployed to Vercel, Netlify, or any static hosting service.
+This app is ready to deploy to Vercel, Netlify, GitHub Pages, Cloudflare Pages, or any static hosting service.
 
-### Deploy to Vercel
+**📖 See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions.**
 
-```bash
-npm run build
-# Upload the dist folder to Vercel
-```
-
-Or use the Vercel CLI:
+### Quick Deploy to Vercel
 
 ```bash
 npx vercel
 ```
+
+The app includes a `vercel.json` configuration file for optimal deployment with proper SPA routing support.
 
 ## Tech Stack
 
