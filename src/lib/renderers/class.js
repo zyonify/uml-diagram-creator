@@ -55,19 +55,19 @@ export function renderClassDiagram(data) {
         .rel-owns { stroke: #333; stroke-width: 2; fill: none; marker-start: url(#filled-diamond); }
       </style>
       <!-- Hollow triangle for inheritance/implements -->
-      <marker id="hollow-triangle" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto">
+      <marker id="hollow-triangle" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="strokeWidth">
         <polygon points="0 0, 12 6, 0 12" fill="white" stroke="#333" stroke-width="2"/>
       </marker>
       <!-- Simple arrow for association/uses -->
-      <marker id="simple-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <marker id="simple-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
         <polygon points="0 0, 10 5, 0 10" fill="#333"/>
       </marker>
       <!-- Hollow diamond for aggregation (has) -->
-      <marker id="hollow-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto">
+      <marker id="hollow-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
         <polygon points="0 7, 7 0, 14 7, 7 14" fill="white" stroke="#333" stroke-width="2"/>
       </marker>
       <!-- Filled diamond for composition (owns) -->
-      <marker id="filled-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto">
+      <marker id="filled-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
         <polygon points="0 7, 7 0, 14 7, 7 14" fill="#333"/>
       </marker>
     </defs>
@@ -109,7 +109,7 @@ export function renderClassDiagram(data) {
     }
   });
 
-  // Draw relationship arrows
+  // Draw relationship arrows with smart routing
   relationships.forEach(rel => {
     const fromIndex = classes.findIndex(c => c.name === rel.from);
     const toIndex = classes.findIndex(c => c.name === rel.to);
@@ -119,7 +119,7 @@ export function renderClassDiagram(data) {
       const toPos = classPositions[toIndex];
 
       // Calculate arrow positions based on relationship type
-      let x1, y1, x2, y2;
+      let x1, y1, x2, y2, useTopConnection = false;
 
       // For has/owns (aggregation/composition), arrow goes from owner to owned
       // Diamond is at the owner end
@@ -130,6 +130,7 @@ export function renderClassDiagram(data) {
         y2 = toPos.y;
       } else {
         // For extends/implements/uses, arrow points to the target
+        useTopConnection = true;
         x1 = fromPos.x + fromPos.width / 2;
         y1 = fromPos.y;
         x2 = toPos.x + toPos.width / 2;
@@ -137,7 +138,26 @@ export function renderClassDiagram(data) {
       }
 
       const className = `rel-${rel.type}`;
-      svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+
+      // Check if classes are adjacent or have classes in between
+      const minIndex = Math.min(fromIndex, toIndex);
+      const maxIndex = Math.max(fromIndex, toIndex);
+      const hasClassesBetween = maxIndex - minIndex > 1;
+
+      if (hasClassesBetween) {
+        // Use curved path to arc over intermediate classes
+        const midX = (x1 + x2) / 2;
+        const distance = Math.abs(x2 - x1);
+        const arcHeight = useTopConnection ? -Math.max(80, distance * 0.3) : Math.max(80, distance * 0.3);
+        const midY = Math.min(y1, y2) + arcHeight;
+
+        // Create bezier curve path
+        const path = `M ${x1},${y1} Q ${midX},${midY} ${x2},${y2}`;
+        svg += `<path class="${className}" d="${path}"/>`;
+      } else {
+        // Adjacent classes or direct connection - use straight line
+        svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+      }
     }
   });
 
