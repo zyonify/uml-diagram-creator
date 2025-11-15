@@ -25,16 +25,76 @@ export function renderClassDiagram(data) {
     return headerHeight + fieldsHeight + methodsHeight + padding * 3;
   });
 
-  // Calculate positions
-  let currentX = sideMargin;
-  const classPositions = classes.map((cls, i) => {
-    const pos = { x: currentX, y: topMargin, width: classWidth, height: classHeights[i] };
-    currentX += classWidth + classSpacing;
-    return pos;
+  // Hierarchical layout: arrange classes in levels based on relationships
+  const levels = [];
+  const classLevel = new Map();
+  const visited = new Set();
+
+  // Helper function to calculate level recursively
+  function calculateLevel(className, currentLevel = 0) {
+    if (visited.has(className)) return classLevel.get(className);
+    visited.add(className);
+
+    const cls = classes.find(c => c.name === className);
+    if (!cls) return currentLevel;
+
+    // Find relationships where this class is the source
+    const parentRels = relationships.filter(r =>
+      r.from === className && (r.type === 'extends' || r.type === 'implements')
+    );
+
+    let maxParentLevel = -1;
+    for (const rel of parentRels) {
+      const parentLevel = calculateLevel(rel.to, currentLevel + 1);
+      maxParentLevel = Math.max(maxParentLevel, parentLevel);
+    }
+
+    const level = maxParentLevel + 1;
+    classLevel.set(className, level);
+
+    if (!levels[level]) levels[level] = [];
+    levels[level].push(className);
+
+    return level;
+  }
+
+  // Calculate levels for all classes
+  classes.forEach(cls => {
+    if (!visited.has(cls.name)) {
+      calculateLevel(cls.name);
+    }
   });
 
-  const width = currentX - classSpacing + sideMargin;
-  const height = topMargin + Math.max(...classHeights) + 100;
+  // Position classes in a grid layout
+  const rowHeight = Math.max(...classHeights) + 100;
+  const classPositions = [];
+  const classNameToIndex = new Map();
+
+  classes.forEach((cls, i) => {
+    classNameToIndex.set(cls.name, i);
+  });
+
+  let maxWidth = 0;
+  levels.forEach((levelClasses, level) => {
+    const levelWidth = levelClasses.length * (classWidth + classSpacing);
+    maxWidth = Math.max(maxWidth, levelWidth);
+
+    levelClasses.forEach((className, indexInLevel) => {
+      const classIndex = classNameToIndex.get(className);
+      const x = sideMargin + indexInLevel * (classWidth + classSpacing);
+      const y = topMargin + level * rowHeight;
+
+      classPositions[classIndex] = {
+        x,
+        y,
+        width: classWidth,
+        height: classHeights[classIndex]
+      };
+    });
+  });
+
+  const width = Math.max(maxWidth + sideMargin * 2, 800);
+  const height = topMargin + (levels.length * rowHeight) + 100;
 
   // Generate SVG
   let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
@@ -109,7 +169,7 @@ export function renderClassDiagram(data) {
     }
   });
 
-  // Draw relationship arrows with smart routing
+  // Draw relationship arrows with intelligent routing
   relationships.forEach(rel => {
     const fromIndex = classes.findIndex(c => c.name === rel.from);
     const toIndex = classes.findIndex(c => c.name === rel.to);
@@ -118,44 +178,55 @@ export function renderClassDiagram(data) {
       const fromPos = classPositions[fromIndex];
       const toPos = classPositions[toIndex];
 
-      // Calculate arrow positions based on relationship type
-      let x1, y1, x2, y2, useTopConnection = false;
+      // Calculate edge connection points based on relative positions
+      let x1, y1, x2, y2;
 
-      // For has/owns (aggregation/composition), arrow goes from owner to owned
-      // Diamond is at the owner end
-      if (rel.type === 'has' || rel.type === 'owns') {
-        x1 = fromPos.x + fromPos.width / 2;
-        y1 = fromPos.y + fromPos.height;
-        x2 = toPos.x + toPos.width / 2;
-        y2 = toPos.y;
-      } else {
-        // For extends/implements/uses, arrow points to the target
-        useTopConnection = true;
-        x1 = fromPos.x + fromPos.width / 2;
-        y1 = fromPos.y;
-        x2 = toPos.x + toPos.width / 2;
-        y2 = toPos.y + toPos.height;
-      }
+      // Check if classes are on different vertical levels
+      const fromLevel = classLevel.get(classes[fromIndex].name) || 0;
+      const toLevel = classLevel.get(classes[toIndex].name) || 0;
+      const verticalDiff = Math.abs(fromPos.y - toPos.y);
+      const isVerticalLayout = verticalDiff > 50;
 
       const className = `rel-${rel.type}`;
 
-      // Check if classes are adjacent or have classes in between
-      const minIndex = Math.min(fromIndex, toIndex);
-      const maxIndex = Math.max(fromIndex, toIndex);
-      const hasClassesBetween = maxIndex - minIndex > 1;
+      if (isVerticalLayout) {
+        // Vertical relationship (parent above child or has/owns)
+        if (fromPos.y < toPos.y) {
+          // From is above To: connect bottom of from to top of to
+          x1 = fromPos.x + fromPos.width / 2;
+          y1 = fromPos.y + fromPos.height;
+          x2 = toPos.x + toPos.width / 2;
+          y2 = toPos.y;
+        } else {
+          // From is below To: connect top of from to bottom of to
+          x1 = fromPos.x + fromPos.width / 2;
+          y1 = fromPos.y;
+          x2 = toPos.x + toPos.width / 2;
+          y2 = toPos.y + toPos.height;
+        }
 
-      if (hasClassesBetween) {
-        // Use curved path to arc over intermediate classes
-        const midX = (x1 + x2) / 2;
-        const distance = Math.abs(x2 - x1);
-        const arcHeight = useTopConnection ? -Math.max(80, distance * 0.3) : Math.max(80, distance * 0.3);
-        const midY = Math.min(y1, y2) + arcHeight;
-
-        // Create bezier curve path
-        const path = `M ${x1},${y1} Q ${midX},${midY} ${x2},${y2}`;
-        svg += `<path class="${className}" d="${path}"/>`;
+        // Use straight line for vertical connections
+        svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
       } else {
-        // Adjacent classes or direct connection - use straight line
+        // Horizontal relationship (same level)
+        const goingRight = fromPos.x < toPos.x;
+
+        if (goingRight) {
+          // Start from right edge of source
+          x1 = fromPos.x + fromPos.width;
+          y1 = fromPos.y + fromPos.height / 2;
+          // End at left edge of target
+          x2 = toPos.x;
+          y2 = toPos.y + toPos.height / 2;
+        } else {
+          // Start from left edge of source
+          x1 = fromPos.x;
+          y1 = fromPos.y + fromPos.height / 2;
+          // End at right edge of target
+          x2 = toPos.x + toPos.width;
+          y2 = toPos.y + toPos.height / 2;
+        }
+
         svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
       }
     }
