@@ -129,32 +129,48 @@
   // Example templates
   const examples = {
     sequence: `sequence:
-  User -> Server: Login Request
+  User -> Server: Login Request (solid arrow = call)
   alt [valid credentials]
-    Server -> Database: Get User
-    Database --> Server: User Data
-    Server --> User: Login Success
-  else [invalid]
-    Server --> User: Login Failed
+    Server -> Database: Validate
+    Database --> Server: Valid (dotted = return)
+    Server --> User: Success Response
+  else [invalid credentials]
+    Server --> User: Error Response
   end`,
     sequenceLoop: `sequence:
-  User -> Server: Get Items
-  loop [for each item]
-    Server -> Database: Query Item
-    Database --> Server: Item Data
+  Client -> API: Request Data
+  loop [for each page]
+    API -> Database: Query Page
+    Database --> API: Page Results (dotted = return)
   end
-  Server --> User: All Items`,
+  API --> Client: Complete Dataset (dotted = return)`,
     class: `class:
-  User {
-    +id: string
-    +name: string
-    +email: string
-    +login()
-    +logout()
+  ILogger {
+    +log()
+    +error()
   }
-  Admin extends User {
-    +permissions: array
-    +manageUsers()
+  FileLogger implements ILogger {
+    -filePath: string
+    +log()
+    +error()
+  }
+  Service uses ILogger {
+    +processData()
+  }
+  Company has Employee {
+    +name: string
+    +hire()
+  }
+  Car owns Engine {
+    +start()
+  }
+  Employee {
+    +id: int
+    -salary: decimal
+    #bonus: decimal
+  }
+  Engine {
+    +cylinders: int
   }`,
     classRelationships: `class:
   IRepository {
@@ -190,50 +206,50 @@
     +query()
   }`,
     allFeatures: `sequence:
-  User -> App: Request Order
-  App -> Auth: Verify User
+  User -> App: Request Order (solid = call)
+  App -> Auth: Check Credentials
 
   alt [authenticated]
-    Auth --> App: Token Valid
+    Auth --> App: Token Valid (dotted = return)
     App -> OrderService: Create Order
 
-    loop [for each item]
+    loop [for each item in cart]
       OrderService -> Inventory: Check Stock
-      Inventory --> OrderService: Stock Status
+      Inventory --> OrderService: Available
     end
 
-    alt [items available]
-      OrderService -> Payment: Process Payment
+    alt [all items available]
+      OrderService -> Payment: Process
 
-      opt [discount code]
-        Payment -> Discount: Validate Code
-        Discount --> Payment: Applied
+      opt [has discount code]
+        Payment -> Promo: Validate Code
+        Promo --> Payment: Discount Applied
       end
 
-      alt [payment success]
-        Payment --> OrderService: Confirmed
+      alt [payment approved]
+        Payment --> OrderService: Success
 
-        par [send notifications]
+        par [parallel notifications]
           OrderService -> Email: Send Receipt
-          OrderService -> SMS: Send Alert
+          OrderService -> SMS: Send Tracking
         end
 
         OrderService -> Database: Save Order
         Database --> OrderService: Order ID
-        OrderService --> App: Success
-      else [payment failed]
-        Payment --> OrderService: Declined
+        OrderService --> App: Order Complete
+      else [payment declined]
+        Payment --> OrderService: Failed
         OrderService --> App: Payment Error
       end
-    else [out of stock]
-      OrderService --> App: Stock Error
+    else [items unavailable]
+      OrderService --> App: Out of Stock
     end
   else [not authenticated]
     Auth --> App: Invalid Token
-    App --> User: Login Required
+    App --> User: Please Login
   end
 
-  App --> User: Order Result`
+  App --> User: Final Response`
   };
 
   export function loadExample(type) {

@@ -111,17 +111,23 @@ class:
 
 ### Sequence Diagrams
 
-#### Basic Messages
+#### Basic Messages (UML 2.5 Standard)
 - Start with `sequence:`
-- Use `->` for requests
-- Use `-->` for responses
+- **Solid arrow** `->` = Synchronous call/request (one object calling another)
+- **Dotted arrow** `-->` = Return/response message (returning data or acknowledgment)
 - Format: `From -> To: Message`
 
+Example:
+```
+Client -> Server: Login Request (solid = call)
+Server --> Client: Success Response (dotted = return)
+```
+
 #### Control Structures
-- **Loop**: `loop [condition]` ... `end`
-- **If/Else**: `alt [condition]` ... `else [condition]` ... `end`
-- **Optional**: `opt [condition]` ... `end`
-- **Parallel**: `par` ... `end`
+- **Loop**: `loop [condition]` ... `end` - Iteration
+- **If/Else**: `alt [condition]` ... `else [condition]` ... `end` - Conditionals
+- **Optional**: `opt [condition]` ... `end` - Optional flow
+- **Parallel**: `par` ... `end` - Concurrent execution
 
 ### Class Diagrams
 
@@ -133,12 +139,16 @@ class:
 - Format fields as: `+fieldName: type`
 - Format methods as: `+methodName()`
 
-#### Relationships
-- **Inheritance**: `ChildClass extends ParentClass` (hollow triangle)
-- **Implementation**: `MyClass implements IInterface` (dashed line + hollow triangle)
-- **Dependency**: `ClassA uses ClassB` (dashed arrow)
-- **Aggregation**: `Container has Item` (hollow diamond - weak ownership)
-- **Composition**: `Owner owns Part` (filled diamond - strong ownership)
+#### Relationships (UML 2.5 Standard)
+
+**Solid Lines:**
+- **Inheritance**: `ChildClass extends ParentClass` → Solid line with hollow triangle
+- **Aggregation**: `Container has Item` → Solid line with hollow diamond (weak "has-a")
+- **Composition**: `Owner owns Part` → Solid line with filled diamond (strong "owns-a")
+
+**Dashed Lines:**
+- **Implementation**: `MyClass implements IInterface` → Dashed line with hollow triangle
+- **Dependency**: `ClassA uses ClassB` → Dashed arrow (temporary usage)
 
 ## Deployment
 
