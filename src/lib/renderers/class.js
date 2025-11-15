@@ -110,11 +110,11 @@ export function renderClassDiagram(data, aspectRatio = 'auto') {
         .class-name { fill: #333; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; text-anchor: middle; }
         .class-member { fill: #333; font-family: 'Courier New', monospace; font-size: 12px; }
         .divider { stroke: #333; stroke-width: 1; }
-        .rel-extends { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#hollow-triangle); }
-        .rel-implements { stroke: #333; stroke-width: 2; fill: none; stroke-dasharray: 5,5; marker-end: url(#hollow-triangle); }
-        .rel-uses { stroke: #333; stroke-width: 2; fill: none; stroke-dasharray: 5,5; marker-end: url(#simple-arrow); }
-        .rel-has { stroke: #333; stroke-width: 2; fill: none; marker-start: url(#hollow-diamond); }
-        .rel-owns { stroke: #333; stroke-width: 2; fill: none; marker-start: url(#filled-diamond); }
+        .rel-extends { stroke: #333; stroke-width: 1.5; fill: none; marker-end: url(#hollow-triangle); }
+        .rel-implements { stroke: #333; stroke-width: 1.5; fill: none; stroke-dasharray: 5,5; marker-end: url(#hollow-triangle); }
+        .rel-uses { stroke: #333; stroke-width: 1.5; fill: none; stroke-dasharray: 5,5; marker-end: url(#simple-arrow); }
+        .rel-has { stroke: #333; stroke-width: 1.5; fill: none; marker-start: url(#hollow-diamond); }
+        .rel-owns { stroke: #333; stroke-width: 1.5; fill: none; marker-start: url(#filled-diamond); }
       </style>
       <!-- Hollow triangle for inheritance/implements -->
       <marker id="hollow-triangle" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="strokeWidth">
@@ -125,11 +125,11 @@ export function renderClassDiagram(data, aspectRatio = 'auto') {
         <polygon points="0 0, 10 5, 0 10" fill="#333"/>
       </marker>
       <!-- Hollow diamond for aggregation (has) -->
-      <marker id="hollow-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
-        <polygon points="0 7, 7 0, 14 7, 7 14" fill="white" stroke="#333" stroke-width="2"/>
+      <marker id="hollow-diamond" markerWidth="14" markerHeight="14" refX="15" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
+        <polygon points="0 7, 7 0, 14 7, 7 14" fill="white" stroke="#333" stroke-width="1.5"/>
       </marker>
       <!-- Filled diamond for composition (owns) -->
-      <marker id="filled-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
+      <marker id="filled-diamond" markerWidth="14" markerHeight="14" refX="15" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
         <polygon points="0 7, 7 0, 14 7, 7 14" fill="#333"/>
       </marker>
     </defs>

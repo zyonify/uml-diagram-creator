@@ -2,6 +2,7 @@
   import { exportAsSVG, exportAsPNG, exportAsPDF } from '../utils/export.js';
   import { exportAsUML, importUML, exportAsMarkdown, copyToClipboard, generateShareableLink } from '../utils/fileOperations.js';
   import { saveDiagram, diagramText } from '../stores/diagram.js';
+  import Legend from './Legend.svelte';
   import { onMount } from 'svelte';
 
   export let getSVG;
@@ -12,6 +13,7 @@
 
   let showSaveDialog = false;
   let diagramName = '';
+  let showLegend = false;
 
   // Listen for keyboard shortcut save event
   onMount(() => {
@@ -142,6 +144,10 @@
       cancelSave();
     }
   }
+
+  function openLegend() {
+    showLegend = true;
+  }
 </script>
 
 <div class="toolbar">
@@ -186,6 +192,10 @@
         🔗 Share
       </button>
     </div>
+
+    <button class="toolbar-btn help-btn" on:click={openLegend} title="Syntax Guide">
+      ❓ Legend
+    </button>
   </div>
 </div>
 
@@ -208,6 +218,8 @@
     </div>
   </div>
 {/if}
+
+<Legend bind:showLegend />
 
 <style>
   .toolbar {
@@ -270,6 +282,12 @@
   .share-group {
     display: flex;
     gap: 8px;
+    padding-left: 15px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .help-btn {
+    margin-left: 15px;
     padding-left: 15px;
     border-left: 1px solid rgba(255, 255, 255, 0.2);
   }

@@ -129,10 +129,10 @@
   // Example templates
   const examples = {
     sequence: `sequence:
-  User -> Server: Login Request (solid arrow = call)
+  User -> Server: Login Request
   alt [valid credentials]
     Server -> Database: Validate
-    Database --> Server: Valid (dotted = return)
+    Database --> Server: Valid
     Server --> User: Success Response
   else [invalid credentials]
     Server --> User: Error Response
@@ -141,9 +141,9 @@
   Client -> API: Request Data
   loop [for each page]
     API -> Database: Query Page
-    Database --> API: Page Results (dotted = return)
+    Database --> API: Page Results
   end
-  API --> Client: Complete Dataset (dotted = return)`,
+  API --> Client: Complete Dataset`,
     class: `class:
   Shape {
     #color: string
@@ -208,11 +208,11 @@
     +query()
   }`,
     allFeatures: `sequence:
-  User -> App: Request Order (solid = call)
+  User -> App: Request Order
   App -> Auth: Check Credentials
 
   alt [authenticated]
-    Auth --> App: Token Valid (dotted = return)
+    Auth --> App: Token Valid
     App -> OrderService: Create Order
 
     loop [for each item in cart]
