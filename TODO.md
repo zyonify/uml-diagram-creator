@@ -45,6 +45,19 @@
 - [x] Update examples to showcase control structures
 - [x] Nested control structures support
 
+### Premium Features (v1.3) - Compete with Paid Tools!
+- [x] **Undo/Redo** - Full history (100 levels), Ctrl+Z/Ctrl+Y, debounced updates
+- [x] **Import/Export .uml files** - Save and load diagrams as portable text files
+- [x] **Copy as Markdown** - Embed diagrams in docs with base64 SVG
+- [x] **Shareable links** - Generate URLs with encoded diagrams
+- [x] **Load from URL** - Auto-load diagrams on startup from URL params
+- [x] **6 Color themes** - Blue, Purple, Green, Orange, Dark Mode, Pastel
+- [x] **Theme selector** - Live theme switching in preview
+- [x] **9 Example templates** - Organized dropdown (6 sequence + 3 class)
+- [x] **Undo/Redo UI** - Visual buttons with disabled states
+- [x] **File operations module** - Centralized import/export utilities
+- [x] **Theme system** - SVG recoloring with theme store
+
 ## 📋 TODO
 
 ### Phase 3: Storage & UX
