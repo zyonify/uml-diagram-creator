@@ -94,18 +94,35 @@ sequence:
 
 ```
 class:
-  User {
-    +id: string
-    +name: string
-    +email: string
-    +login()
-    +logout()
+  Shape {
+    #color: string
+    #x: int
+    #y: int
+    +draw()
+    +getArea()
   }
-  Admin extends User {
-    +permissions: array
-    +manageUsers()
+  Circle extends Shape {
+    -radius: double
+    +draw()
+    +getArea()
+  }
+  Rectangle extends Shape {
+    -width: double
+    -height: double
+    +draw()
+    +getArea()
+  }
+  Canvas has Shape {
+    +shapes: List
+    +addShape()
+  }
+  Window owns Canvas {
+    +title: string
+    +show()
   }
 ```
+
+Shows: inheritance (extends), aggregation (has), composition (owns), and all visibility modifiers (+, -, #).
 
 ## Syntax Guide
 

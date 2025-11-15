@@ -145,32 +145,34 @@
   end
   API --> Client: Complete Dataset (dotted = return)`,
     class: `class:
-  ILogger {
-    +log()
-    +error()
+  Shape {
+    #color: string
+    #x: int
+    #y: int
+    +draw()
+    +move()
+    +getArea()
   }
-  FileLogger implements ILogger {
-    -filePath: string
-    +log()
-    +error()
+  Circle extends Shape {
+    -radius: double
+    +draw()
+    +getArea()
   }
-  Service uses ILogger {
-    +processData()
+  Rectangle extends Shape {
+    -width: double
+    -height: double
+    +draw()
+    +getArea()
   }
-  Company has Employee {
-    +name: string
-    +hire()
+  Canvas has Shape {
+    +shapes: List
+    +addShape()
+    +render()
   }
-  Car owns Engine {
-    +start()
-  }
-  Employee {
-    +id: int
-    -salary: decimal
-    #bonus: decimal
-  }
-  Engine {
-    +cylinders: int
+  Window owns Canvas {
+    +title: string
+    +show()
+    +close()
   }`,
     classRelationships: `class:
   IRepository {
