@@ -4,12 +4,27 @@ A free, text-based UML diagram creator with export functionality. Create sequenc
 
 ## Features
 
-- **Text-based editing** - Write diagrams using simple, intuitive syntax
+### Core Features
+- **Text-based editing** - Write diagrams using simple, intuitive syntax with syntax highlighting
 - **Real-time preview** - See your diagram update as you type
 - **Multiple diagram types** - Support for sequence and class diagrams
-- **Export options** - Download diagrams as SVG, PNG, or PDF
-- **Local storage** - Save and load diagrams in your browser
-- **No account required** - Everything runs in your browser
+- **Control structures** - Loops, conditionals (if/else), optional flows, and parallel execution in sequence diagrams
+- **Line numbers** - Professional code editor with line numbers and dark theme
+
+### Export & Sharing
+- **Multiple export formats** - Download as SVG, PNG, PDF, or .uml files
+- **Import/Export** - Save and load your diagrams as .uml files
+- **Copy as Markdown** - Embed diagrams in documentation with one click
+- **Shareable links** - Generate URLs to share diagrams with others
+- **Local storage** - Save diagrams in your browser (no account needed)
+
+### Advanced Features
+- **Undo/Redo** - Full history support (Ctrl+Z/Ctrl+Y)
+- **Color themes** - 6 beautiful color schemes (Default Blue, Purple Dream, Fresh Green, Warm Orange, Dark Mode, Soft Pastel)
+- **Zoom controls** - Scale diagrams from 50% to 200%
+- **Template library** - 9 example templates to get started quickly
+- **Keyboard shortcuts** - Efficient workflow with hotkeys
+- **No account required** - Everything runs in your browser, completely private
 
 ## Getting Started
 

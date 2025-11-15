@@ -3,7 +3,8 @@
   import Toolbar from './lib/components/Toolbar.svelte';
   import Editor from './lib/components/Editor.svelte';
   import Preview from './lib/components/Preview.svelte';
-  import { diagramType, loadDiagrams } from './lib/stores/diagram.js';
+  import { diagramType, loadDiagrams, diagramText } from './lib/stores/diagram.js';
+  import { loadFromURL } from './lib/utils/fileOperations.js';
 
   let previewComponent;
   let currentDiagramType = 'sequence';
@@ -12,6 +13,14 @@
 
   onMount(() => {
     loadDiagrams();
+
+    // Check if there's a diagram in the URL
+    const urlDiagram = loadFromURL();
+    if (urlDiagram) {
+      diagramText.set(urlDiagram);
+      // Clean URL after loading
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   });
 
   function getSVG() {

@@ -1,10 +1,14 @@
 <script>
   import { exportAsSVG, exportAsPNG, exportAsPDF } from '../utils/export.js';
+  import { exportAsUML, importUML, exportAsMarkdown, copyToClipboard, generateShareableLink } from '../utils/fileOperations.js';
   import { saveDiagram, diagramText } from '../stores/diagram.js';
   import { onMount } from 'svelte';
 
   export let getSVG;
   export let diagramType;
+
+  let currentText = '';
+  diagramText.subscribe(v => currentText = v);
 
   let showSaveDialog = false;
   let diagramName = '';
@@ -43,6 +47,60 @@
   function handleNew() {
     if (confirm('Clear current diagram? (Unsaved changes will be lost)')) {
       diagramText.set('');
+    }
+  }
+
+  function handleImport() {
+    importUML((text, filename) => {
+      if (confirm(`Load diagram from "${filename}"? Current diagram will be replaced.`)) {
+        diagramText.set(text);
+      }
+    });
+  }
+
+  function handleExportUML() {
+    const text = document.querySelector('.editor')?.value || '';
+    if (!text.trim()) {
+      alert('No diagram to export');
+      return;
+    }
+    const filename = `diagram-${Date.now()}.uml`;
+    exportAsUML(text, filename);
+  }
+
+  async function handleCopyMarkdown() {
+    const svg = getSVG();
+    const text = document.querySelector('.editor')?.value || '';
+
+    if (!svg || !text.trim()) {
+      alert('No diagram to copy');
+      return;
+    }
+
+    const markdown = exportAsMarkdown(svg, text);
+    const success = await copyToClipboard(markdown);
+
+    if (success) {
+      alert('Diagram copied as Markdown!');
+    } else {
+      alert('Failed to copy to clipboard');
+    }
+  }
+
+  async function handleShare() {
+    const text = document.querySelector('.editor')?.value || '';
+    if (!text.trim()) {
+      alert('No diagram to share');
+      return;
+    }
+
+    const link = generateShareableLink(text);
+    const success = await copyToClipboard(link);
+
+    if (success) {
+      alert('Shareable link copied to clipboard!\n\nAnyone with this link can view your diagram.');
+    } else {
+      alert('Failed to copy link to clipboard');
     }
   }
 
@@ -92,16 +150,23 @@
   </div>
 
   <div class="toolbar-section">
-    <button class="toolbar-btn" on:click={handleNew} title="Clear diagram (Ctrl+N)">
+    <button class="toolbar-btn" on:click={handleNew} title="Clear diagram">
       📄 New
     </button>
 
-    <button class="toolbar-btn" on:click={handleSave} title="Save diagram (Ctrl+S)">
+    <button class="toolbar-btn" on:click={handleImport} title="Import .uml file">
+      📂 Import
+    </button>
+
+    <button class="toolbar-btn" on:click={handleSave} title="Save to browser (Ctrl+S)">
       💾 Save
     </button>
 
     <div class="export-group">
       <span class="export-label">Export:</span>
+      <button class="toolbar-btn export-btn" on:click={handleExportUML} title="Export as .uml file">
+        UML
+      </button>
       <button class="toolbar-btn export-btn" on:click={() => handleExport('svg')} title="Export as SVG">
         SVG
       </button>
@@ -110,6 +175,15 @@
       </button>
       <button class="toolbar-btn export-btn" on:click={() => handleExport('pdf')} title="Export as PDF">
         PDF
+      </button>
+    </div>
+
+    <div class="share-group">
+      <button class="toolbar-btn" on:click={handleCopyMarkdown} title="Copy as Markdown">
+        📋 MD
+      </button>
+      <button class="toolbar-btn" on:click={handleShare} title="Generate shareable link">
+        🔗 Share
       </button>
     </div>
   </div>
@@ -179,6 +253,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    padding-left: 15px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .export-label {
@@ -189,6 +265,13 @@
   .export-btn {
     padding: 6px 12px;
     font-size: 13px;
+  }
+
+  .share-group {
+    display: flex;
+    gap: 8px;
+    padding-left: 15px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .modal-overlay {

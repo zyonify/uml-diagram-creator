@@ -1,5 +1,6 @@
 <script>
   import { diagramText, diagramType } from '../stores/diagram.js';
+  import { currentTheme, themes, applyThemeToSVG } from '../stores/theme.js';
   import { parseSequenceDiagram } from '../parsers/sequence.js';
   import { parseClassDiagram } from '../parsers/class.js';
   import { renderSequenceDiagram } from '../renderers/sequence.js';
@@ -12,6 +13,14 @@
   let zoom = 100;
   let lineCount = 0;
   let elementCount = 0;
+  let selectedTheme = 'default';
+
+  currentTheme.subscribe(v => {
+    selectedTheme = v;
+    if (svgContent) {
+      updatePreview(); // Re-render with new theme
+    }
+  });
 
   // Subscribe to stores
   diagramType.subscribe(v => currentType = v);
@@ -64,7 +73,7 @@
             svgContent = '';
             elementCount = 0;
           } else {
-            svgContent = result.svg;
+            svgContent = applyThemeToSVG(result.svg, selectedTheme);
             error = '';
             elementCount = countMessages(parsed.elements || []);
           }
@@ -83,7 +92,7 @@
             svgContent = '';
             elementCount = 0;
           } else {
-            svgContent = result.svg;
+            svgContent = applyThemeToSVG(result.svg, selectedTheme);
             error = '';
             elementCount = parsed.classes?.length || 0;
           }
@@ -138,6 +147,11 @@
   <div class="preview-header">
     <h3>Preview</h3>
     <div class="header-controls">
+      <select bind:value={selectedTheme} on:change={(e) => currentTheme.set(e.target.value)} class="theme-select" title="Change color theme">
+        {#each Object.entries(themes) as [key, theme]}
+          <option value={key}>{theme.name}</option>
+        {/each}
+      </select>
       {#if svgContent}
         <div class="zoom-controls">
           <button class="zoom-btn" on:click={zoomOut} title="Zoom out">−</button>
@@ -243,6 +257,20 @@
     color: #666;
     min-width: 40px;
     text-align: center;
+  }
+
+  .theme-select {
+    padding: 4px 10px;
+    font-size: 12px;
+    background: white;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .theme-select:hover {
+    border-color: #999;
   }
 
   .diagram-type {

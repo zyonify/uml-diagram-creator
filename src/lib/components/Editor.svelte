@@ -1,22 +1,34 @@
 <script>
-  import { diagramText } from '../stores/diagram.js';
+  import { diagramText, updateHistory, undo, redo, canUndo, canRedo } from '../stores/diagram.js';
   import { onMount } from 'svelte';
 
   let value = '';
   let textareaElement;
   let lineNumbersElement;
   let highlightedElement;
+  let canUndoValue = false;
+  let canRedoValue = false;
+  let inputTimeout;
 
-  // Subscribe to store
+  // Subscribe to stores
   diagramText.subscribe(v => {
     value = v;
     updateLineNumbers();
     updateSyntaxHighlight();
   });
 
-  // Update store when text changes
+  canUndo.subscribe(v => canUndoValue = v);
+  canRedo.subscribe(v => canRedoValue = v);
+
+  // Update store when text changes with debounced history
   function handleInput(e) {
     diagramText.set(e.target.value);
+
+    // Debounce history updates (500ms)
+    clearTimeout(inputTimeout);
+    inputTimeout = setTimeout(() => {
+      updateHistory(e.target.value);
+    }, 500);
   }
 
   // Handle keyboard shortcuts
@@ -38,8 +50,25 @@
     // Ctrl/Cmd + S - trigger save
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
-      // Dispatch custom event that Toolbar can listen to
       window.dispatchEvent(new CustomEvent('save-diagram'));
+    }
+
+    // Ctrl/Cmd + Z - Undo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    }
+
+    // Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z - Redo
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      e.preventDefault();
+      redo();
+    }
+
+    // Ctrl/Cmd + F - Find (to be implemented)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('find-in-editor'));
     }
   }
 
@@ -138,12 +167,28 @@
   <div class="editor-header">
     <div class="header-left">
       <h3>Editor</h3>
-      <span class="shortcut-hint">Ctrl+S to save • Tab for indent</span>
+      <span class="shortcut-hint">Ctrl+Z undo • Ctrl+Y redo • Ctrl+S save</span>
     </div>
-    <div class="examples">
-      <button on:click={() => loadExample('sequence')}>If/Else</button>
-      <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
-      <button on:click={() => loadExample('class')}>Class</button>
+    <div class="editor-actions">
+      <div class="undo-redo">
+        <button
+          class="icon-btn"
+          on:click={undo}
+          disabled={!canUndoValue}
+          title="Undo (Ctrl+Z)"
+        >↶</button>
+        <button
+          class="icon-btn"
+          on:click={redo}
+          disabled={!canRedoValue}
+          title="Redo (Ctrl+Y)"
+        >↷</button>
+      </div>
+      <div class="examples">
+        <button on:click={() => loadExample('sequence')}>If/Else</button>
+        <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
+        <button on:click={() => loadExample('class')}>Class</button>
+      </div>
     </div>
   </div>
   <div class="editor-wrapper">
@@ -195,6 +240,46 @@
     font-size: 11px;
     color: #666;
     font-weight: normal;
+  }
+
+  .editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .undo-redo {
+    display: flex;
+    gap: 4px;
+    padding-right: 12px;
+    border-right: 1px solid #ddd;
+  }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 20px;
+    background: white;
+    color: #666;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon-btn:hover:not(:disabled) {
+    background: #f5f5f5;
+    color: #333;
+    border-color: #999;
+  }
+
+  .icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
   .examples {
