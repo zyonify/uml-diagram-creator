@@ -267,7 +267,6 @@
         <button on:click={() => loadExample('sequence')}>If/Else</button>
         <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
         <button on:click={() => loadExample('class')}>Class</button>
-        <button on:click={() => loadExample('classRelationships')}>Arrows</button>
       </div>
     </div>
   </div>
