@@ -155,7 +155,52 @@
   Admin extends User {
     +permissions: array
     +manageUsers()
-  }`
+  }`,
+    allFeatures: `sequence:
+  User -> App: Request Order
+  App -> Auth: Verify User
+
+  alt [authenticated]
+    Auth --> App: Token Valid
+    App -> OrderService: Create Order
+
+    loop [for each item]
+      OrderService -> Inventory: Check Stock
+      Inventory --> OrderService: Stock Status
+    end
+
+    alt [items available]
+      OrderService -> Payment: Process Payment
+
+      opt [discount code]
+        Payment -> Discount: Validate Code
+        Discount --> Payment: Applied
+      end
+
+      alt [payment success]
+        Payment --> OrderService: Confirmed
+
+        par [send notifications]
+          OrderService -> Email: Send Receipt
+          OrderService -> SMS: Send Alert
+        end
+
+        OrderService -> Database: Save Order
+        Database --> OrderService: Order ID
+        OrderService --> App: Success
+      else [payment failed]
+        Payment --> OrderService: Declined
+        OrderService --> App: Payment Error
+      end
+    else [out of stock]
+      OrderService --> App: Stock Error
+    end
+  else [not authenticated]
+    Auth --> App: Invalid Token
+    App --> User: Login Required
+  end
+
+  App --> User: Order Result`
   };
 
   export function loadExample(type) {
@@ -185,6 +230,7 @@
         >↷</button>
       </div>
       <div class="examples">
+        <button class="all-features-btn" on:click={() => loadExample('allFeatures')}>All Features</button>
         <button on:click={() => loadExample('sequence')}>If/Else</button>
         <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
         <button on:click={() => loadExample('class')}>Class</button>
@@ -300,6 +346,16 @@
 
   .examples button:hover {
     background: #357ABD;
+  }
+
+  .examples .all-features-btn {
+    background: #9C27B0;
+    font-weight: 600;
+    padding: 6px 14px;
+  }
+
+  .examples .all-features-btn:hover {
+    background: #7B1FA2;
   }
 
   .editor-wrapper {
