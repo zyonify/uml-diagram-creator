@@ -10,6 +10,13 @@
  *   SubClass extends ParentClass {
  *     ...
  *   }
+ *
+ * Relationships:
+ *   - extends: inheritance (hollow triangle)
+ *   - implements: interface implementation (dashed line + hollow triangle)
+ *   - uses: association/dependency (dashed arrow)
+ *   - has: aggregation (hollow diamond)
+ *   - owns: composition (filled diamond)
  */
 
 export function parseClassDiagram(text) {
@@ -20,23 +27,32 @@ export function parseClassDiagram(text) {
   }
 
   const classes = [];
+  const relationships = [];
   let currentClass = null;
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
 
-    // Match class declaration: ClassName { or SubClass extends Parent {
-    const classMatch = line.match(/^(\w+)(?:\s+extends\s+(\w+))?\s*\{$/);
+    // Match class declaration with relationship: ClassName extends/implements/uses/has/owns Target {
+    const classMatch = line.match(/^(\w+)(?:\s+(extends|implements|uses|has|owns)\s+(\w+))?\s*\{$/);
     if (classMatch) {
       if (currentClass) {
         classes.push(currentClass);
       }
       currentClass = {
         name: classMatch[1],
-        extends: classMatch[2] || null,
         fields: [],
         methods: []
       };
+
+      // Store relationship separately
+      if (classMatch[2] && classMatch[3]) {
+        relationships.push({
+          from: classMatch[1],
+          to: classMatch[3],
+          type: classMatch[2]
+        });
+      }
       continue;
     }
 
@@ -78,5 +94,5 @@ export function parseClassDiagram(text) {
     classes.push(currentClass);
   }
 
-  return { classes };
+  return { classes, relationships };
 }

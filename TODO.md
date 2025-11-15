@@ -81,6 +81,7 @@
 - None yet
 
 ## 💡 Future Ideas
+- C# code to UML converter (import .cs files or entire folders)
 - Collaboration features
 - More diagram types (activity, state, etc.)
 - Import from PlantUML/Mermaid syntax

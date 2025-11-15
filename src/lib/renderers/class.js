@@ -7,7 +7,7 @@ export function renderClassDiagram(data) {
     return { error: data.error };
   }
 
-  const { classes } = data;
+  const { classes, relationships = [] } = data;
 
   // SVG dimensions and spacing
   const classWidth = 200;
@@ -48,10 +48,27 @@ export function renderClassDiagram(data) {
         .class-name { fill: #333; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; text-anchor: middle; }
         .class-member { fill: #333; font-family: 'Courier New', monospace; font-size: 12px; }
         .divider { stroke: #333; stroke-width: 1; }
-        .inheritance { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+        .rel-extends { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#hollow-triangle); }
+        .rel-implements { stroke: #333; stroke-width: 2; fill: none; stroke-dasharray: 5,5; marker-end: url(#hollow-triangle); }
+        .rel-uses { stroke: #333; stroke-width: 2; fill: none; stroke-dasharray: 5,5; marker-end: url(#simple-arrow); }
+        .rel-has { stroke: #333; stroke-width: 2; fill: none; marker-start: url(#hollow-diamond); }
+        .rel-owns { stroke: #333; stroke-width: 2; fill: none; marker-start: url(#filled-diamond); }
       </style>
-      <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-        <polygon points="0 0, 10 3, 0 6" fill="white" stroke="#333" stroke-width="1"/>
+      <!-- Hollow triangle for inheritance/implements -->
+      <marker id="hollow-triangle" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto">
+        <polygon points="0 0, 12 6, 0 12" fill="white" stroke="#333" stroke-width="2"/>
+      </marker>
+      <!-- Simple arrow for association/uses -->
+      <marker id="simple-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+        <polygon points="0 0, 10 5, 0 10" fill="#333"/>
+      </marker>
+      <!-- Hollow diamond for aggregation (has) -->
+      <marker id="hollow-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto">
+        <polygon points="0 7, 7 0, 14 7, 7 14" fill="white" stroke="#333" stroke-width="2"/>
+      </marker>
+      <!-- Filled diamond for composition (owns) -->
+      <marker id="filled-diamond" markerWidth="14" markerHeight="14" refX="1" refY="7" orient="auto">
+        <polygon points="0 7, 7 0, 14 7, 7 14" fill="#333"/>
       </marker>
     </defs>
   `;
@@ -92,23 +109,35 @@ export function renderClassDiagram(data) {
     }
   });
 
-  // Draw inheritance arrows
-  classes.forEach((cls, i) => {
-    if (cls.extends) {
-      const childPos = classPositions[i];
-      const parentIndex = classes.findIndex(c => c.name === cls.extends);
+  // Draw relationship arrows
+  relationships.forEach(rel => {
+    const fromIndex = classes.findIndex(c => c.name === rel.from);
+    const toIndex = classes.findIndex(c => c.name === rel.to);
 
-      if (parentIndex !== -1) {
-        const parentPos = classPositions[parentIndex];
+    if (fromIndex !== -1 && toIndex !== -1) {
+      const fromPos = classPositions[fromIndex];
+      const toPos = classPositions[toIndex];
 
-        // Draw arrow from child to parent
-        const x1 = childPos.x + childPos.width / 2;
-        const y1 = childPos.y;
-        const x2 = parentPos.x + parentPos.width / 2;
-        const y2 = parentPos.y + parentPos.height;
+      // Calculate arrow positions based on relationship type
+      let x1, y1, x2, y2;
 
-        svg += `<line class="inheritance" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+      // For has/owns (aggregation/composition), arrow goes from owner to owned
+      // Diamond is at the owner end
+      if (rel.type === 'has' || rel.type === 'owns') {
+        x1 = fromPos.x + fromPos.width / 2;
+        y1 = fromPos.y + fromPos.height;
+        x2 = toPos.x + toPos.width / 2;
+        y2 = toPos.y;
+      } else {
+        // For extends/implements/uses, arrow points to the target
+        x1 = fromPos.x + fromPos.width / 2;
+        y1 = fromPos.y;
+        x2 = toPos.x + toPos.width / 2;
+        y2 = toPos.y + toPos.height;
       }
+
+      const className = `rel-${rel.type}`;
+      svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
     }
   });
 

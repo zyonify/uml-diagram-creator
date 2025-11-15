@@ -125,13 +125,20 @@ class:
 
 ### Class Diagrams
 
+#### Members
 - Start with `class:`
 - Use `+` for public members
 - Use `-` for private members
 - Use `#` for protected members
 - Format fields as: `+fieldName: type`
 - Format methods as: `+methodName()`
-- Inheritance: `ChildClass extends ParentClass`
+
+#### Relationships
+- **Inheritance**: `ChildClass extends ParentClass` (hollow triangle)
+- **Implementation**: `MyClass implements IInterface` (dashed line + hollow triangle)
+- **Dependency**: `ClassA uses ClassB` (dashed arrow)
+- **Aggregation**: `Container has Item` (hollow diamond - weak ownership)
+- **Composition**: `Owner owns Part` (filled diamond - strong ownership)
 
 ## Deployment
 

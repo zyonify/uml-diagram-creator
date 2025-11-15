@@ -103,8 +103,8 @@
       .replace(/^(sequence|class):/gm, '<span class="keyword">$1:</span>')
       // Highlight control structures
       .replace(/^(loop|alt|opt|par|else|end)\b/gm, '<span class="keyword">$1</span>')
-      // Highlight extends
-      .replace(/\bextends\b/g, '<span class="keyword">extends</span>')
+      // Highlight class relationships
+      .replace(/\b(extends|implements|uses|has|owns)\b/g, '<span class="keyword">$1</span>')
       // Highlight arrows
       .replace(/(--?>|<--?)/g, '<span class="arrow">$1</span>')
       // Highlight conditions in square brackets
@@ -155,6 +155,39 @@
   Admin extends User {
     +permissions: array
     +manageUsers()
+  }`,
+    classRelationships: `class:
+  IRepository {
+    +save()
+    +find()
+  }
+  UserRepository implements IRepository {
+    -connection: Database
+    +save()
+    +find()
+  }
+  UserService uses UserRepository {
+    +createUser()
+    +getUser()
+  }
+  Department has Employee {
+    +name: string
+    +addEmployee()
+  }
+  Car owns Engine {
+    +model: string
+    +start()
+  }
+  Employee {
+    +id: string
+    +name: string
+  }
+  Engine {
+    +cylinders: int
+    +run()
+  }
+  Database {
+    +query()
   }`,
     allFeatures: `sequence:
   User -> App: Request Order
@@ -234,6 +267,7 @@
         <button on:click={() => loadExample('sequence')}>If/Else</button>
         <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
         <button on:click={() => loadExample('class')}>Class</button>
+        <button on:click={() => loadExample('classRelationships')}>Arrows</button>
       </div>
     </div>
   </div>
