@@ -207,8 +207,15 @@ export function renderClassDiagram(data, aspectRatio = 'auto') {
           y2 = toPos.y + toPos.height;
         }
 
-        // Use straight line for vertical connections
-        svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+        // Use orthogonal path for vertical connections
+        if (x1 === x2) {
+          // Perfectly aligned vertically - straight line
+          svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+        } else {
+          // Need horizontal jog - create L-shaped path
+          const midY = y1 + (y2 - y1) / 2;
+          svg += `<polyline class="${className}" points="${x1},${y1} ${x1},${midY} ${x2},${midY} ${x2},${y2}"/>`;
+        }
       } else {
         // Horizontal relationship (same level)
         const goingRight = fromPos.x < toPos.x;
@@ -229,7 +236,15 @@ export function renderClassDiagram(data, aspectRatio = 'auto') {
           y2 = toPos.y + toPos.height / 2;
         }
 
-        svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+        // Use orthogonal path for horizontal connections
+        if (y1 === y2) {
+          // Perfectly aligned horizontally - straight line
+          svg += `<line class="${className}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+        } else {
+          // Need vertical jog - create L-shaped path
+          const midX = x1 + (x2 - x1) / 2;
+          svg += `<polyline class="${className}" points="${x1},${y1} ${midX},${y1} ${midX},${y2} ${x2},${y2}"/>`;
+        }
       }
     }
   });
