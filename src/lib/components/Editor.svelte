@@ -102,11 +102,11 @@
       // Highlight keywords
       .replace(/^(sequence|class):/gm, '<span class="keyword">$1:</span>')
       // Highlight control structures
-      .replace(/^(loop|alt|opt|par|else|end)\b/gm, '<span class="keyword">$1</span>')
+      .replace(/^(loop|alt|opt|par|break|strict|seq|critical|else|end)\b/gm, '<span class="keyword">$1</span>')
       // Highlight class relationships
       .replace(/\b(extends|implements|uses|has|owns)\b/g, '<span class="keyword">$1</span>')
-      // Highlight arrows
-      .replace(/(--?>|<--?)/g, '<span class="arrow">$1</span>')
+      // Highlight arrows (including async ->>)
+      .replace(/(--?>|->?>|<--?)/g, '<span class="arrow">$1</span>')
       // Highlight conditions in square brackets
       .replace(/\[([^\]]+)\]/g, '<span class="condition">[$1]</span>')
       // Highlight visibility modifiers
@@ -130,15 +130,16 @@
   const examples = {
     sequence: `sequence:
   User -> Server: Login Request
+  Server -> Server: Validate Session
   alt [valid credentials]
-    Server -> Database: Validate
+    Server -> Database: Check Credentials
     Database --> Server: Valid
     Server --> User: Success Response
   else [invalid credentials]
     Server --> User: Error Response
   end`,
     sequenceLoop: `sequence:
-  Client -> API: Request Data
+  Client ->> API: Async Request
   loop [for each page]
     API -> Database: Query Page
     Database --> API: Page Results
@@ -210,10 +211,11 @@
     allFeatures: `sequence:
   User -> App: Request Order
   App -> Auth: Check Credentials
+  Auth -> Auth: Validate Token
 
   alt [authenticated]
     Auth --> App: Token Valid
-    App -> OrderService: Create Order
+    App ->> OrderService: Create Order Async
 
     loop [for each item in cart]
       OrderService -> Inventory: Check Stock
@@ -222,26 +224,38 @@
 
     alt [all items available]
       OrderService -> Payment: Process
+      Payment -> Payment: Calculate Total
 
       opt [has discount code]
         Payment -> Promo: Validate Code
         Promo --> Payment: Discount Applied
       end
 
+      critical [atomic transaction]
+        Payment -> Bank: Charge Card
+        Bank --> Payment: Transaction ID
+      end
+
       alt [payment approved]
         Payment --> OrderService: Success
 
         par [parallel notifications]
-          OrderService -> Email: Send Receipt
-          OrderService -> SMS: Send Tracking
+          OrderService ->> Email: Send Receipt
+          OrderService ->> SMS: Send Tracking
         end
 
-        OrderService -> Database: Save Order
+        seq [ordered steps]
+          OrderService -> Inventory: Reserve Items
+          OrderService -> Database: Save Order
+        end
+
         Database --> OrderService: Order ID
         OrderService --> App: Order Complete
       else [payment declined]
         Payment --> OrderService: Failed
-        OrderService --> App: Payment Error
+        break [cancel flow]
+          OrderService --> App: Payment Error
+        end
       end
     else [items unavailable]
       OrderService --> App: Out of Stock

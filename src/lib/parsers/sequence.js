@@ -2,11 +2,15 @@
  * Parse sequence diagram syntax with control structures
  * Format:
  * sequence:
- *   Actor -> Server: Request
+ *   Actor -> Server: Synchronous Request
+ *   Actor ->> Server: Asynchronous Request
+ *   Server -> Server: Self Message
  *   loop [condition]
  *     Server -> Database: Query
  *   end
  *   Server --> Actor: Response
+ *
+ * Supported operators: loop, alt/else, opt, par, break, strict, seq, critical
  */
 
 export function parseSequenceDiagram(text) {
@@ -23,8 +27,8 @@ export function parseSequenceDiagram(text) {
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
 
-    // Check for fragment start (loop, alt, opt, par)
-    const fragmentMatch = line.match(/^(loop|alt|opt|par)(?:\s+\[(.+)\])?$/i);
+    // Check for fragment start (loop, alt, opt, par, break, strict, seq, critical)
+    const fragmentMatch = line.match(/^(loop|alt|opt|par|break|strict|seq|critical)(?:\s+\[(.+)\])?$/i);
     if (fragmentMatch) {
       const fragment = {
         type: 'fragment',
@@ -90,8 +94,8 @@ export function parseSequenceDiagram(text) {
       continue;
     }
 
-    // Match message: Actor -> Server: Message or Actor --> Server: Message
-    const messageMatch = line.match(/^(.+?)\s*(-->?)\s*(.+?):\s*(.+)$/);
+    // Match message: Actor -> Server: Message, Actor --> Server: Message, Actor ->> Server: Message
+    const messageMatch = line.match(/^(.+?)\s*(-->?|->?>)\s*(.+?):\s*(.+)$/);
     if (messageMatch) {
       const [, from, arrow, to, message] = messageMatch;
       const fromTrimmed = from.trim();
@@ -100,12 +104,21 @@ export function parseSequenceDiagram(text) {
       participants.add(fromTrimmed);
       participants.add(toTrimmed);
 
+      // Determine message type based on arrow
+      let messageType = 'sync'; // Default synchronous
+      if (arrow === '-->') {
+        messageType = 'response';
+      } else if (arrow === '->>') {
+        messageType = 'async';
+      }
+
       const msg = {
         type: 'message',
         from: fromTrimmed,
         to: toTrimmed,
         message: message.trim(),
-        messageType: arrow === '-->' ? 'response' : 'request'
+        messageType: messageType,
+        isSelfMessage: fromTrimmed === toTrimmed
       };
 
       // Add to current context (fragment or root)

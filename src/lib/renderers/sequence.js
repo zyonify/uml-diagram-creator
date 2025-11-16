@@ -69,6 +69,7 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
         .message-line.response { stroke-dasharray: 5,5; }
         .message-text { fill: #333; font-family: Arial, sans-serif; font-size: 12px; }
         .arrow { fill: #333; }
+        .arrow-open { stroke: #333; stroke-width: 2; fill: none; }
         .fragment-box { fill: none; stroke: #666; stroke-width: 1.5; }
         .fragment-header { fill: #E8EAF6; stroke: #666; stroke-width: 1; }
         .fragment-label { fill: #333; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; }
@@ -108,19 +109,53 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
         currentY += messageSpacing;
         const x1 = participantPositions[element.from];
         const x2 = participantPositions[element.to];
-        const isResponse = element.messageType === 'response';
 
-        // Draw arrow line
-        svg += `<line class="message-line ${isResponse ? 'response' : ''}" x1="${x1}" y1="${currentY}" x2="${x2 - 10}" y2="${currentY}"/>`;
+        // Handle self-messages (loops back to same participant)
+        if (element.isSelfMessage) {
+          const loopWidth = 60;
+          const loopHeight = 30;
+          const x = x1;
 
-        // Draw arrowhead
-        const arrowDirection = x2 > x1 ? 1 : -1;
-        svg += `<polygon class="arrow" points="${x2 - 10 * arrowDirection},${currentY} ${x2 - 10 * arrowDirection - 5 * arrowDirection},${currentY - 5} ${x2 - 10 * arrowDirection - 5 * arrowDirection},${currentY + 5}"/>`;
+          // Draw self-message arc
+          const path = `M ${x} ${currentY} L ${x + loopWidth} ${currentY} L ${x + loopWidth} ${currentY + loopHeight} L ${x} ${currentY + loopHeight}`;
+          const lineClass = element.messageType === 'response' ? 'response' : '';
+          svg += `<path class="message-line ${lineClass}" d="${path}" fill="none"/>`;
 
-        // Draw message text
-        const textX = (x1 + x2) / 2;
-        const textY = currentY - 5;
-        svg += `<text class="message-text" x="${textX}" y="${textY}" text-anchor="middle">${element.message}</text>`;
+          // Draw arrowhead at end of loop
+          svg += `<polygon class="arrow" points="${x},${currentY + loopHeight} ${x + 5},${currentY + loopHeight - 5} ${x + 5},${currentY + loopHeight + 5}"/>`;
+
+          // Draw message text
+          svg += `<text class="message-text" x="${x + loopWidth + 5}" y="${currentY + loopHeight / 2 + 4}" text-anchor="start">${element.message}</text>`;
+
+          currentY += loopHeight / 2; // Add extra spacing for self-messages
+        } else {
+          // Regular messages between different participants
+          const isResponse = element.messageType === 'response';
+          const isAsync = element.messageType === 'async';
+          const arrowDirection = x2 > x1 ? 1 : -1;
+          const arrowTipX = x2;
+          const arrowBaseX = x2 - 10 * arrowDirection;
+
+          // Draw arrowhead first (so line doesn't overlap it)
+          // Async and response use open arrowhead, sync uses filled
+          if (isAsync || isResponse) {
+            // Open arrowhead
+            svg += `<polyline class="arrow-open" points="${arrowBaseX},${currentY - 5} ${arrowTipX},${currentY} ${arrowBaseX},${currentY + 5}" fill="none"/>`;
+          } else {
+            // Filled arrowhead (synchronous)
+            svg += `<polygon class="arrow" points="${arrowTipX},${currentY} ${arrowBaseX},${currentY - 5} ${arrowBaseX},${currentY + 5}"/>`;
+          }
+
+          // Draw arrow line (stop before arrowhead)
+          const lineEndX = x2 - 12 * arrowDirection;
+          const lineClass = isResponse ? 'response' : '';
+          svg += `<line class="message-line ${lineClass}" x1="${x1}" y1="${currentY}" x2="${lineEndX}" y2="${currentY}"/>`;
+
+          // Draw message text
+          const textX = (x1 + x2) / 2;
+          const textY = currentY - 5;
+          svg += `<text class="message-text" x="${textX}" y="${textY}" text-anchor="middle">${element.message}</text>`;
+        }
 
       } else if (element.type === 'fragment') {
         const fragmentStartY = currentY + messageSpacing / 2;
@@ -134,7 +169,11 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
           loop: 'loop',
           alt: 'alt',
           opt: 'opt',
-          par: 'par'
+          par: 'par',
+          break: 'break',
+          strict: 'strict',
+          seq: 'seq',
+          critical: 'critical'
         };
         const label = fragmentLabels[element.kind] || element.kind;
 

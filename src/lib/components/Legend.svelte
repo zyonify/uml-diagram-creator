@@ -24,25 +24,33 @@
         <section>
           <h3>Sequence Diagrams</h3>
 
-          <h4>Basic Messages (UML 2.5 Standard)</h4>
+          <h4>Message Types (UML 2.5 Standard)</h4>
           <ul>
-            <li><strong>Solid arrow</strong> <code>-&gt;</code> = Synchronous call/request (one object calling another)</li>
-            <li><strong>Dotted arrow</strong> <code>--&gt;</code> = Return/response message (returning data or acknowledgment)</li>
+            <li><strong>Synchronous call</strong> <code>-&gt;</code> = Solid line with filled arrowhead (caller waits for response)</li>
+            <li><strong>Asynchronous call</strong> <code>-&gt;&gt;</code> = Solid line with open arrowhead (caller doesn't wait)</li>
+            <li><strong>Return/Response</strong> <code>--&gt;</code> = Dashed line with open arrowhead (returning data)</li>
+            <li><strong>Self-message</strong> <code>A -&gt; A: Message</code> = Message to same participant (loops back)</li>
           </ul>
 
           <div class="example">
             <strong>Example:</strong>
             <pre>sequence:
-  Client -> Server: Login Request
-  Server --> Client: Success Response</pre>
+  Client -> Server: Sync Request
+  Client ->> Queue: Async Message
+  Server -> Server: Process Data
+  Server --> Client: Response</pre>
           </div>
 
-          <h4>Control Structures</h4>
+          <h4>Control Structures (Combined Fragments)</h4>
           <ul>
-            <li><strong>Loop</strong>: <code>loop [condition]</code> ... <code>end</code> - Iteration</li>
-            <li><strong>If/Else</strong>: <code>alt [condition]</code> ... <code>else [condition]</code> ... <code>end</code> - Conditionals</li>
+            <li><strong>Loop</strong>: <code>loop [condition]</code> ... <code>end</code> - Iteration/repetition</li>
+            <li><strong>Alternative</strong>: <code>alt [condition]</code> ... <code>else [condition]</code> ... <code>end</code> - Conditionals</li>
             <li><strong>Optional</strong>: <code>opt [condition]</code> ... <code>end</code> - Optional flow</li>
             <li><strong>Parallel</strong>: <code>par</code> ... <code>end</code> - Concurrent execution</li>
+            <li><strong>Break</strong>: <code>break [condition]</code> ... <code>end</code> - Exception/exit from enclosing fragment</li>
+            <li><strong>Critical</strong>: <code>critical [condition]</code> ... <code>end</code> - Atomic region (no interleaving)</li>
+            <li><strong>Strict</strong>: <code>strict</code> ... <code>end</code> - Strict sequential ordering</li>
+            <li><strong>Sequence</strong>: <code>seq</code> ... <code>end</code> - Weak sequencing</li>
           </ul>
 
           <div class="example">
@@ -53,6 +61,9 @@
     Server --> User: Success
   else [invalid]
     Server --> User: Failed
+    break [too many attempts]
+      Server -> Server: Block Account
+    end
   end</pre>
           </div>
         </section>
