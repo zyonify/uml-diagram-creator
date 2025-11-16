@@ -117,20 +117,20 @@ export function renderClassDiagram(data, aspectRatio = 'auto') {
         .rel-owns { stroke: #333; stroke-width: 1.5; fill: none; marker-start: url(#filled-diamond); }
       </style>
       <!-- Hollow triangle for inheritance/implements -->
-      <marker id="hollow-triangle" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 12 6, 0 12" fill="white" stroke="#333" stroke-width="2"/>
+      <marker id="hollow-triangle" markerWidth="10" markerHeight="10" refX="9.5" refY="5" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 10 5, 0 10" fill="white" stroke="#333" stroke-width="1.5"/>
       </marker>
       <!-- Simple arrow for association/uses -->
       <marker id="simple-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
         <polygon points="0 0, 10 5, 0 10" fill="#333"/>
       </marker>
       <!-- Hollow diamond for aggregation (has) -->
-      <marker id="hollow-diamond" markerWidth="14" markerHeight="14" refX="15" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
-        <polygon points="0 7, 7 0, 14 7, 7 14" fill="white" stroke="#333" stroke-width="1.5"/>
+      <marker id="hollow-diamond" markerWidth="10" markerHeight="10" refX="11" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth">
+        <polygon points="0 5, 5 0, 10 5, 5 10" fill="white" stroke="#333" stroke-width="1.5"/>
       </marker>
       <!-- Filled diamond for composition (owns) -->
-      <marker id="filled-diamond" markerWidth="14" markerHeight="14" refX="15" refY="7" orient="auto-start-reverse" markerUnits="strokeWidth">
-        <polygon points="0 7, 7 0, 14 7, 7 14" fill="#333"/>
+      <marker id="filled-diamond" markerWidth="10" markerHeight="10" refX="11" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth">
+        <polygon points="0 5, 5 0, 10 5, 5 10" fill="#333"/>
       </marker>
     </defs>
   `;
