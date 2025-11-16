@@ -265,7 +265,63 @@
     App --> User: Please Login
   end
 
-  App --> User: Final Response`
+  App --> User: Final Response`,
+    authentication: `sequence:
+  Client -> API: POST /login
+  API -> API: Validate Credentials
+
+  alt [valid credentials]
+    API -> TokenService: Generate JWT
+    TokenService --> API: Token
+    API -> Database: Update Last Login
+    Database --> API: Success
+    API --> Client: 200 OK + Token
+  else [invalid credentials]
+    API -> API: Log Failed Attempt
+    API --> Client: 401 Unauthorized
+  end`,
+    payment: `sequence:
+  User -> App: Checkout
+  App -> PaymentGateway: Process Payment
+
+  PaymentGateway -> Bank: Authorize Card
+  Bank --> PaymentGateway: Authorization
+
+  alt [approved]
+    PaymentGateway --> App: Payment Success
+
+    par [parallel operations]
+      App ->> EmailService: Send Receipt
+      App ->> InventoryService: Update Stock
+    end
+
+    critical [transaction]
+      App -> Database: Save Order
+      Database --> App: Order ID
+    end
+
+    App --> User: Order Confirmed
+  else [declined]
+    PaymentGateway --> App: Payment Failed
+    App --> User: Payment Declined
+  end`,
+    microservices: `sequence:
+  Client ->> API Gateway: Request
+  API Gateway -> Auth: Validate Token
+  Auth --> API Gateway: Valid
+
+  API Gateway ->> User Service: Get User
+  API Gateway ->> Product Service: Get Products
+  API Gateway ->> Order Service: Get Orders
+
+  par [concurrent responses]
+    User Service --> API Gateway: User Data
+    Product Service --> API Gateway: Products
+    Order Service --> API Gateway: Orders
+  end
+
+  API Gateway -> API Gateway: Aggregate Data
+  API Gateway --> Client: Response`
   };
 
   export function loadExample(type) {
@@ -298,6 +354,9 @@
         <button class="all-features-btn" on:click={() => loadExample('allFeatures')}>All Features</button>
         <button on:click={() => loadExample('sequence')}>If/Else</button>
         <button on:click={() => loadExample('sequenceLoop')}>Loop</button>
+        <button on:click={() => loadExample('authentication')}>Auth</button>
+        <button on:click={() => loadExample('payment')}>Payment</button>
+        <button on:click={() => loadExample('microservices')}>Microservices</button>
         <button on:click={() => loadExample('class')}>Class</button>
       </div>
     </div>
