@@ -89,10 +89,10 @@
             <strong>Example:</strong>
             <pre>{`class:
   MyClass {
-    +publicField: string
-    -privateField: int
-    #protectedField: bool
-    +publicMethod()
+    +PublicField: string
+    -PrivateField: int
+    #ProtectedField: bool
+    +PublicMethod()
   }`}</pre>
           </div>
 
@@ -115,16 +115,16 @@
             <strong>Example:</strong>
             <pre>{`class:
   Shape {
-    +draw()
+    +Draw()
   }
   Circle extends Shape {
-    +draw()
+    +Draw()
   }
   Canvas has Shape {
-    +shapes: List
+    +Shapes: List<Shape>
   }
   Window owns Canvas {
-    +canvas: Canvas
+    +Canvas: Canvas
   }`}</pre>
           </div>
         </section>

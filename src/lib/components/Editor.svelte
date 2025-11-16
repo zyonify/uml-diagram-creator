@@ -147,66 +147,66 @@
   API --> Client: Complete Dataset`,
     class: `class:
   Shape {
-    #color: string
-    #x: int
-    #y: int
-    +draw()
-    +move()
-    +getArea()
+    #Color: string
+    #X: int
+    #Y: int
+    +Draw()
+    +Move()
+    +GetArea()
   }
   Circle extends Shape {
-    -radius: double
-    +draw()
-    +getArea()
+    -Radius: double
+    +Draw()
+    +GetArea()
   }
   Rectangle extends Shape {
-    -width: double
-    -height: double
-    +draw()
-    +getArea()
+    -Width: double
+    -Height: double
+    +Draw()
+    +GetArea()
   }
   Canvas has Shape {
-    +shapes: List
-    +addShape()
-    +render()
+    +Shapes: List<Shape>
+    +AddShape()
+    +Render()
   }
   Window owns Canvas {
-    +title: string
-    +show()
-    +close()
+    +Title: string
+    +Show()
+    +Close()
   }`,
     classRelationships: `class:
   IRepository {
-    +save()
-    +find()
+    +Save()
+    +Find()
   }
   UserRepository implements IRepository {
-    -connection: Database
-    +save()
-    +find()
+    -Connection: Database
+    +Save()
+    +Find()
   }
   UserService uses UserRepository {
-    +createUser()
-    +getUser()
+    +CreateUser()
+    +GetUser()
   }
   Department has Employee {
-    +name: string
-    +addEmployee()
+    +Name: string
+    +AddEmployee()
   }
   Car owns Engine {
-    +model: string
-    +start()
+    +Model: string
+    +Start()
   }
   Employee {
-    +id: string
-    +name: string
+    +Id: string
+    +Name: string
   }
   Engine {
-    +cylinders: int
-    +run()
+    +Cylinders: int
+    +Run()
   }
   Database {
-    +query()
+    +Query()
   }`,
     allFeatures: `sequence:
   User -> App: Request Order
