@@ -65,7 +65,6 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
         .participant-box { fill: #4A90E2; stroke: #2E5C8A; stroke-width: 2; }
         .participant-text { fill: white; font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
         .lifeline { stroke: #999; stroke-width: 1; stroke-dasharray: 5,5; }
-        .activation-box { fill: #f0f0f0; stroke: #666; stroke-width: 1; }
         .message-line { stroke: #333; stroke-width: 2; fill: none; }
         .message-line.response { stroke-dasharray: 5,5; }
         .message-text { fill: #333; font-family: Arial, sans-serif; font-size: 12px; }
@@ -103,18 +102,6 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   // Track current Y position
   let currentY = lifelineStartY;
 
-  // Track activation boxes for each participant
-  const activations = {}; // { participant: [{ startY, endY, depth }] }
-  participants.forEach(p => {
-    activations[p] = [];
-  });
-
-  // Track active call stack for each participant
-  const activeStack = {}; // { participant: [{ startY, depth }] }
-  participants.forEach(p => {
-    activeStack[p] = [];
-  });
-
   // Render elements recursively
   function renderElements(elementList, depth = 0) {
     for (const element of elementList) {
@@ -122,46 +109,6 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
         currentY += messageSpacing;
         const x1 = participantPositions[element.from];
         const x2 = participantPositions[element.to];
-
-        const isResponse = element.messageType === 'response';
-        const isAsync = element.messageType === 'async';
-        const isSelfMessage = element.isSelfMessage;
-
-        // Track activations
-        if (!isResponse) {
-          // Synchronous or async call: sender and receiver activate
-          const senderDepth = activeStack[element.from].length;
-          activeStack[element.from].push({ startY: currentY, depth: senderDepth });
-
-          if (!isSelfMessage) {
-            const receiverDepth = activeStack[element.to].length;
-            activeStack[element.to].push({ startY: currentY, depth: receiverDepth });
-          } else {
-            // For self-messages, create a nested activation
-            const nestedDepth = activeStack[element.from].length;
-            activeStack[element.from].push({ startY: currentY, depth: nestedDepth });
-          }
-        } else {
-          // Response: receiver deactivates, sender may deactivate
-          if (activeStack[element.from].length > 0) {
-            const activation = activeStack[element.from].pop();
-            activations[element.from].push({
-              startY: activation.startY,
-              endY: currentY,
-              depth: activation.depth
-            });
-          }
-
-          // Also close sender's activation if they were waiting
-          if (!isSelfMessage && activeStack[element.to].length > 0) {
-            const activation = activeStack[element.to].pop();
-            activations[element.to].push({
-              startY: activation.startY,
-              endY: currentY,
-              depth: activation.depth
-            });
-          }
-        }
 
         // Handle self-messages (loops back to same participant)
         if (element.isSelfMessage) {
@@ -183,6 +130,8 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
           currentY += loopHeight / 2; // Add extra spacing for self-messages
         } else {
           // Regular messages between different participants
+          const isResponse = element.messageType === 'response';
+          const isAsync = element.messageType === 'async';
           const arrowDirection = x2 > x1 ? 1 : -1;
           const arrowTipX = x2;
           const arrowBaseX = x2 - 10 * arrowDirection;
@@ -279,22 +228,6 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   }
 
   renderElements(elements);
-
-  // Draw activation boxes
-  const activationWidth = 10;
-  const activationOffset = 5; // Offset for nested activations
-
-  participants.forEach(p => {
-    const centerX = participantPositions[p];
-
-    activations[p].forEach(activation => {
-      const x = centerX - activationWidth / 2 + (activation.depth * activationOffset);
-      const y = activation.startY;
-      const height = activation.endY - activation.startY;
-
-      svg += `<rect class="activation-box" x="${x}" y="${y}" width="${activationWidth}" height="${height}"/>`;
-    });
-  });
 
   svg += '</svg>';
 
