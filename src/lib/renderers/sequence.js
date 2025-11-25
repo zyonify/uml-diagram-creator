@@ -17,7 +17,6 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   const actorHeight = 60; // Taller for actor icon
   const participantSpacing = 150;
   const messageSpacing = 60;
-  let topMargin = 20;
   const titleHeight = 40;
   const sideMargin = 50;
   const lifelineExtension = 40;
@@ -26,10 +25,9 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   const noteWidth = 120;
   const noteHeight = 40;
 
-  // Add space for title if present
-  if (title) {
-    topMargin += titleHeight;
-  }
+  // Calculate topMargin based on whether title exists
+  // Minimal margin when no title, more space when title present
+  const topMargin = title ? (20 + titleHeight) : 10;
 
   // Create participant positions
   const participantPositions = {};
@@ -112,8 +110,14 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   // Calculate offset to shift content if minX is negative
   const xOffset = minX < 0 ? -minX : 0;
 
+  // Adjust viewBox Y to eliminate top whitespace
+  // When no title: start viewBox just before where participants begin
+  // When title exists: start at 0 to show title
+  const viewBoxY = title ? 0 : (topMargin - 2); // Start viewBox where content actually begins
+  const viewBoxHeight = title ? height : (height - viewBoxY); // Adjust height to match
+
   // Generate SVG with viewBox to handle coordinate system
-  let svg = `<svg width="${width}" height="${height}" viewBox="${minX} 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+  let svg = `<svg width="${width}" height="${height}" viewBox="${minX} ${viewBoxY} ${width} ${viewBoxHeight}" xmlns="http://www.w3.org/2000/svg">`;
 
   // Styles
   svg += `
@@ -146,8 +150,9 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   if (title) {
     const titleLines = title.split('\n');
     const titleY = 20;
+    const titleX = (minX + width / 2); // Center based on viewBox
     titleLines.forEach((line, idx) => {
-      svg += `<text class="title-text" x="${width / 2}" y="${titleY + (idx * 20)}">${line}</text>`;
+      svg += `<text class="title-text" x="${titleX}" y="${titleY + (idx * 20)}">${line}</text>`;
     });
   }
 
@@ -401,11 +406,20 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   const adjustedDimensions = applyAspectRatio(width, height, aspectRatio);
 
   // Update SVG dimensions if aspect ratio was applied
+  // Important: Keep the same viewBox - only change display dimensions
+  // This ensures content scales properly without creating extra whitespace
   if (adjustedDimensions.width !== width || adjustedDimensions.height !== height) {
-    // Replace the existing viewBox-enabled SVG tag
+    // Replace the existing SVG tag with adjusted display dimensions
+    // The viewBox stays the same so content scales to fill the space
     svg = svg.replace(
-      `<svg width="${width}" height="${height}" viewBox="${minX} 0 ${width} ${height}"`,
-      `<svg width="${adjustedDimensions.width}" height="${adjustedDimensions.height}" viewBox="${minX} 0 ${width} ${height}"`
+      `<svg width="${width}" height="${height}" viewBox="${minX} ${viewBoxY} ${width} ${viewBoxHeight}"`,
+      `<svg width="${adjustedDimensions.width}" height="${adjustedDimensions.height}" viewBox="${minX} ${viewBoxY} ${width} ${viewBoxHeight}" preserveAspectRatio="xMidYMin meet"`
+    );
+  } else {
+    // No aspect ratio adjustment - add preserveAspectRatio to base SVG
+    svg = svg.replace(
+      `<svg width="${width}" height="${height}" viewBox="${minX} ${viewBoxY} ${width} ${viewBoxHeight}"`,
+      `<svg width="${width}" height="${height}" viewBox="${minX} ${viewBoxY} ${width} ${viewBoxHeight}" preserveAspectRatio="xMidYMin meet"`
     );
   }
 

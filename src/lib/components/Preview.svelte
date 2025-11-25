@@ -308,6 +308,13 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    line-height: 0; /* Remove extra line-height spacing */
+  }
+
+  .svg-wrapper :global(svg) {
+    display: block; /* Remove inline spacing */
+    margin: 0;
+    vertical-align: top;
   }
 
   .error {
