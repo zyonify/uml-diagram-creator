@@ -38,6 +38,50 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
     participantPositions[name] = sideMargin + (i * participantSpacing) + (participantWidth / 2);
   });
 
+  // Calculate bounds - scan all elements to find min/max X positions needed
+  let minX = sideMargin;
+  let maxX = sideMargin + (participants.length * participantSpacing);
+
+  function calculateBounds(elementList) {
+    for (const element of elementList) {
+      if (element.type === 'note') {
+        if (element.position === 'left') {
+          const participantX = participantPositions[element.participants[0]];
+          const noteX = participantX - participantWidth / 2 - noteWidth - 10;
+          minX = Math.min(minX, noteX);
+        } else if (element.position === 'right') {
+          const participantX = participantPositions[element.participants[0]];
+          const noteX = participantX + participantWidth / 2 + 10;
+          maxX = Math.max(maxX, noteX + noteWidth);
+        } else if (element.position === 'over') {
+          const firstParticipant = element.participants[0];
+          const lastParticipant = element.participants[element.participants.length - 1];
+          const x1 = participantPositions[firstParticipant];
+          const x2 = participantPositions[lastParticipant];
+          const noteX = Math.min(x1, x2) - noteWidth / 2;
+          const noteW = Math.abs(x2 - x1) + noteWidth;
+          minX = Math.min(minX, noteX);
+          maxX = Math.max(maxX, noteX + noteW);
+        }
+      } else if (element.type === 'fragment') {
+        if (element.kind === 'alt' && element.alternatives.length > 0) {
+          for (const alt of element.alternatives) {
+            calculateBounds(alt.elements);
+          }
+        } else {
+          calculateBounds(element.elements);
+        }
+      }
+    }
+  }
+
+  calculateBounds(elements);
+
+  // Add extra padding to ensure nothing is cut off
+  const extraPadding = 20;
+  minX = Math.min(minX - extraPadding, 0);
+  maxX = maxX + extraPadding;
+
   // Calculate total height by counting all elements recursively
   function countElements(elementList) {
     let count = 0;
@@ -62,11 +106,14 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
   }
 
   const totalElements = countElements(elements);
-  const width = sideMargin * 2 + (participants.length * participantSpacing);
+  const width = maxX - minX;
   const height = topMargin + participantHeight + (totalElements * messageSpacing) + lifelineExtension;
 
-  // Generate SVG
-  let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+  // Calculate offset to shift content if minX is negative
+  const xOffset = minX < 0 ? -minX : 0;
+
+  // Generate SVG with viewBox to handle coordinate system
+  let svg = `<svg width="${width}" height="${height}" viewBox="${minX} 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
 
   // Styles
   svg += `
@@ -355,9 +402,10 @@ export function renderSequenceDiagram(data, aspectRatio = 'auto') {
 
   // Update SVG dimensions if aspect ratio was applied
   if (adjustedDimensions.width !== width || adjustedDimensions.height !== height) {
+    // Replace the existing viewBox-enabled SVG tag
     svg = svg.replace(
-      `<svg width="${width}" height="${height}"`,
-      `<svg width="${adjustedDimensions.width}" height="${adjustedDimensions.height}" viewBox="0 0 ${width} ${height}"`
+      `<svg width="${width}" height="${height}" viewBox="${minX} 0 ${width} ${height}"`,
+      `<svg width="${adjustedDimensions.width}" height="${adjustedDimensions.height}" viewBox="${minX} 0 ${width} ${height}"`
     );
   }
 
