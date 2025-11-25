@@ -2,12 +2,16 @@
 
 A free, text-based UML diagram creator with export functionality. Create sequence and class diagrams using simple syntax.
 
+**✨ Now compatible with websequencediagrams.com syntax!**
+
 ## Features
 
 ### Core Features
 - **Text-based editing** - Write diagrams using simple, intuitive syntax with syntax highlighting
 - **Real-time preview** - See your diagram update as you type
 - **Multiple diagram types** - Support for sequence and class diagrams
+- **WebSequenceDiagrams.com compatible** - Use familiar compact syntax (`Alice->Bob:` or `Alice -> Bob:`)
+- **Rich sequence features** - Titles, actors, participants, notes, and multiline text support
 - **Control structures** - Loops, conditionals (if/else), optional flows, and parallel execution in sequence diagrams
 - **Line numbers** - Professional code editor with line numbers and dark theme
 
@@ -54,27 +58,56 @@ npm run preview
 
 ## Syntax Examples
 
-### Sequence Diagram
+### Basic Sequence Diagram
 
 ```
 sequence:
-  User -> Server: Login Request
-  Server -> Database: Validate Credentials
-  Database --> Server: User Data
-  Server --> User: Login Success
+  title User Login Flow
+  actor User
+  participant Server
+  participant Database
+
+  User->Server: Login Request
+  note over Server: Validates credentials
+  Server->Database: Query User
+  Database-->Server: User Data
+  Server-->User: Login Success
+```
+
+### Sequence Diagram with Notes and Actors
+
+```
+sequence:
+  title Payment Processing
+  actor Customer
+  participant Shop
+  participant PaymentGateway
+
+  Customer->Shop: Checkout
+  note left of Customer: Enters card details
+  Shop->PaymentGateway: Process Payment
+  note over PaymentGateway: Validates card
+  PaymentGateway-->Shop: Success
+  note right of Shop: Updates inventory
+  Shop-->Customer: Order Confirmed
 ```
 
 ### Sequence Diagram with Conditionals
 
 ```
 sequence:
-  User -> Server: Login
+  title Authentication
+  actor User
+  participant Server
+
+  User->Server: Login
   alt [valid credentials]
-    Server -> Database: Get User
-    Database --> Server: User Data
-    Server --> User: Success
+    Server->Database: Get User
+    Database-->Server: User Data
+    note over User, Server: Session created
+    Server-->User: Success
   else [invalid]
-    Server --> User: Failed
+    Server-->User: Failed
   end
 ```
 
@@ -82,12 +115,12 @@ sequence:
 
 ```
 sequence:
-  User -> Server: Get Items
+  User->Server: Get Items
   loop [for each item]
-    Server -> Database: Query Item
-    Database --> Server: Item Data
+    Server->Database: Query Item
+    Database-->Server: Item Data
   end
-  Server --> User: All Items
+  Server-->User: All Items
 ```
 
 ### Class Diagram
@@ -128,16 +161,45 @@ Shows: inheritance (extends), aggregation (has), composition (owns), and all vis
 
 ### Sequence Diagrams
 
-#### Basic Messages (UML 2.5 Standard)
+**Compatible with websequencediagrams.com syntax**
+
+#### Basic Structure
 - Start with `sequence:`
-- **Solid arrow** `->` = Synchronous call/request (one object calling another)
-- **Dotted arrow** `-->` = Return/response message (returning data or acknowledgment)
-- Format: `From -> To: Message`
+- **Title**: `title My Diagram` - Add a title to your diagram
+- **Participants**:
+  - `participant Name` - Declare a participant (shown as a box)
+  - `actor Name` - Declare an actor (shown as a stick figure)
+- **Comments**: Lines starting with `//` or `#` are ignored
+
+#### Messages (UML 2.5 Standard)
+- **Synchronous call** `->` = Solid line with filled arrowhead (caller waits)
+- **Asynchronous call** `->>` = Solid line with open arrowhead (caller doesn't wait)
+- **Return/Response** `-->` = Dashed line with open arrowhead (returning data)
+- **Format**: Both compact `Alice->Bob:Message` and spaced `Alice -> Bob: Message` work
 
 Example:
 ```
-Client -> Server: Login Request (solid = call)
-Server --> Client: Success Response (dotted = return)
+sequence:
+  title My System
+  actor User
+  participant Server
+
+  User->Server: Login Request (compact syntax)
+  Server --> User: Success Response (spaced syntax)
+```
+
+#### Notes
+- `note left of Actor: Text` - Note to the left
+- `note right of Actor: Text` - Note to the right
+- `note over Actor: Text` - Note over a participant
+- `note over A, B: Text` - Note spanning multiple participants
+
+#### Multiline Text
+Use `\n` in any text (messages, notes, titles) to create line breaks:
+```
+title My Diagram\nWith Multiple Lines
+User->Server: Send\nMultiline\nMessage
+note over User: This is\na multiline\nnote
 ```
 
 #### Control Structures
@@ -145,6 +207,8 @@ Server --> Client: Success Response (dotted = return)
 - **If/Else**: `alt [condition]` ... `else [condition]` ... `end` - Conditionals
 - **Optional**: `opt [condition]` ... `end` - Optional flow
 - **Parallel**: `par` ... `end` - Concurrent execution
+- **Break**: `break [condition]` ... `end` - Exception/exit
+- **Critical**: `critical [condition]` ... `end` - Atomic region
 
 ### Class Diagrams
 

@@ -101,12 +101,16 @@
       .replace(/>/g, '&gt;')
       // Highlight keywords
       .replace(/^(sequence|class):/gm, '<span class="keyword">$1:</span>')
+      // Highlight title, participant, actor, note keywords
+      .replace(/^(title|participant|actor|boundary|control|entity|database|note)\b/gm, '<span class="keyword">$1</span>')
+      // Highlight note positions
+      .replace(/\b(left|right|over)\s+(of)\b/g, '<span class="keyword">$1 $2</span>')
       // Highlight control structures
       .replace(/^(loop|alt|opt|par|break|strict|seq|critical|else|end)\b/gm, '<span class="keyword">$1</span>')
       // Highlight class relationships
       .replace(/\b(extends|implements|uses|has|owns)\b/g, '<span class="keyword">$1</span>')
-      // Highlight arrows (including async ->>)
-      .replace(/(--?>|->?>|<--?)/g, '<span class="arrow">$1</span>')
+      // Highlight arrows (including async ->> and compact syntax)
+      .replace(/(--?>|->?>|<<--?|<--?)/g, '<span class="arrow">$1</span>')
       // Highlight conditions in square brackets
       .replace(/\[([^\]]+)\]/g, '<span class="condition">[$1]</span>')
       // Highlight visibility modifiers
@@ -115,8 +119,8 @@
       .replace(/:\s*(\w+)(?![^\<]*\<\/span\>)/g, ': <span class="type">$1</span>')
       // Highlight braces
       .replace(/([{}])/g, '<span class="brace">$1</span>')
-      // Highlight comments
-      .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>');
+      // Highlight comments (// and #)
+      .replace(/(\/\/.*$|#.*$)/gm, '<span class="comment">$1</span>');
 
     highlightedElement.innerHTML = highlighted + '\n';
   }
@@ -129,14 +133,20 @@
   // Example templates
   const examples = {
     sequence: `sequence:
-  User -> Server: Login Request
-  Server -> Server: Validate Session
+  title User Login Flow
+  actor User
+  participant Server
+  participant Database
+
+  User->Server: Login Request
+  note over Server: Validates session
+  Server->Server: Check Session
   alt [valid credentials]
-    Server -> Database: Check Credentials
-    Database --> Server: Valid
-    Server --> User: Success Response
+    Server->Database: Query User
+    Database-->Server: User Found
+    Server-->User: Success Response
   else [invalid credentials]
-    Server --> User: Error Response
+    Server-->User: Error Response
   end`,
     sequenceLoop: `sequence:
   Client ->> API: Async Request
@@ -267,61 +277,85 @@
 
   App --> User: Final Response`,
     authentication: `sequence:
-  Client -> API: POST /login
-  API -> API: Validate Credentials
+  title Authentication Flow
+  actor Client
+  participant API
+  participant TokenService
+  participant Database
+
+  Client->API: POST /login
+  note right of API: Validates credentials
+  API->API: Validate Credentials
 
   alt [valid credentials]
-    API -> TokenService: Generate JWT
-    TokenService --> API: Token
-    API -> Database: Update Last Login
-    Database --> API: Success
-    API --> Client: 200 OK + Token
+    API->TokenService: Generate JWT
+    TokenService-->API: Token
+    API->Database: Update Last Login
+    Database-->API: Success
+    note over Client, API: Session established
+    API-->Client: 200 OK + Token
   else [invalid credentials]
-    API -> API: Log Failed Attempt
-    API --> Client: 401 Unauthorized
+    API->API: Log Failed Attempt
+    API-->Client: 401 Unauthorized
   end`,
     payment: `sequence:
-  User -> App: Checkout
-  App -> PaymentGateway: Process Payment
+  title Payment Processing
+  actor User
+  participant App
+  participant PaymentGateway
+  participant Bank
 
-  PaymentGateway -> Bank: Authorize Card
-  Bank --> PaymentGateway: Authorization
+  User->App: Checkout
+  note left of User: Enters payment info
+  App->PaymentGateway: Process Payment
+
+  PaymentGateway->Bank: Authorize Card
+  Bank-->PaymentGateway: Authorization
 
   alt [approved]
-    PaymentGateway --> App: Payment Success
+    PaymentGateway-->App: Payment Success
+    note over App: Process order
 
     par [parallel operations]
-      App ->> EmailService: Send Receipt
-      App ->> InventoryService: Update Stock
+      App->>EmailService: Send Receipt
+      App->>InventoryService: Update Stock
     end
 
     critical [transaction]
-      App -> Database: Save Order
-      Database --> App: Order ID
+      App->Database: Save Order
+      Database-->App: Order ID
     end
 
-    App --> User: Order Confirmed
+    App-->User: Order Confirmed
   else [declined]
-    PaymentGateway --> App: Payment Failed
-    App --> User: Payment Declined
+    PaymentGateway-->App: Payment Failed
+    App-->User: Payment Declined
   end`,
     microservices: `sequence:
-  Client ->> API Gateway: Request
-  API Gateway -> Auth: Validate Token
-  Auth --> API Gateway: Valid
+  title Microservices Architecture
+  actor Client
+  participant API Gateway
+  participant Auth
+  participant User Service
 
-  API Gateway ->> User Service: Get User
-  API Gateway ->> Product Service: Get Products
-  API Gateway ->> Order Service: Get Orders
+  Client->>API Gateway: Request
+  note over API Gateway: Routes request
+  API Gateway->Auth: Validate Token
+  Auth-->API Gateway: Valid
+
+  API Gateway->>User Service: Get User
+  API Gateway->>Product Service: Get Products
+  API Gateway->>Order Service: Get Orders
 
   par [concurrent responses]
-    User Service --> API Gateway: User Data
-    Product Service --> API Gateway: Products
-    Order Service --> API Gateway: Orders
+    User Service-->API Gateway: User Data
+    Product Service-->API Gateway: Products
+    Order Service-->API Gateway: Orders
   end
 
-  API Gateway -> API Gateway: Aggregate Data
-  API Gateway --> Client: Response`
+  API Gateway->API Gateway: Aggregate Data
+  note left of Client: Receives response
+  API Gateway-->Client: Response`
   };
 
   export function loadExample(type) {
@@ -371,7 +405,7 @@
       on:input={handleInput}
       on:keydown={handleKeyDown}
       on:scroll={handleScroll}
-      placeholder="Start typing your UML diagram here...&#10;&#10;Example:&#10;sequence:&#10;  Actor -> Server: Request&#10;  Server --> Actor: Response"
+      placeholder="Start typing your UML diagram here...&#10;&#10;Example:&#10;sequence:&#10;  title My Diagram&#10;  actor User&#10;  participant Server&#10;  User->Server: Request&#10;  note over Server: Processing&#10;  Server-->User: Response"
       spellcheck="false"
     ></textarea>
   </div>

@@ -64,6 +64,19 @@
 - [x] **Deployment guide** - Comprehensive DEPLOYMENT.md with multiple platforms
 - [x] **Updated README** - Added deployment section with quick start
 
+### WebSequenceDiagrams.com Compatibility (v1.5)
+- [x] **Compact arrow syntax** - Support both `Alice->Bob:` and `Alice -> Bob:` formats
+- [x] **Title support** - `title My Diagram` with multiline support via `\n`
+- [x] **Participant declarations** - `participant Name` and `actor Name` (stick figures)
+- [x] **Note support** - `note left of`, `note right of`, `note over Actor`, `note over A, B`
+- [x] **Multiline text** - Use `\n` in messages, notes, and titles for line breaks
+- [x] **Comment support** - Lines starting with `//` or `#` are ignored
+- [x] **Actor rendering** - Stick figure icons for actors vs boxes for participants
+- [x] **Note rendering** - Yellow sticky note style with folded corner effect
+- [x] **Updated examples** - All sample diagrams showcase new syntax features
+- [x] **Updated documentation** - README, Legend, and syntax highlighting updated
+- [x] **Backward compatible** - All existing diagrams continue to work
+
 ## 📋 TODO
 
 ### Phase 3: Storage & UX

@@ -1,31 +1,119 @@
 /**
  * Parse sequence diagram syntax with control structures
- * Format:
+ * Format (compatible with websequencediagrams.com):
  * sequence:
- *   Actor -> Server: Synchronous Request
- *   Actor ->> Server: Asynchronous Request
+ *   title My Diagram Title
+ *   participant Alice
+ *   actor Bob
+ *   Alice->Server: Synchronous Request (compact syntax)
+ *   Alice ->> Server: Asynchronous Request (spaced syntax)
  *   Server -> Server: Self Message
+ *   note left of Alice: Note text
+ *   note over Alice, Bob: Multi-participant note
  *   loop [condition]
  *     Server -> Database: Query
  *   end
- *   Server --> Actor: Response
+ *   Server --> Alice: Response
  *
  * Supported operators: loop, alt/else, opt, par, break, strict, seq, critical
  */
 
 export function parseSequenceDiagram(text) {
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('//') && !line.startsWith('#'));
 
   if (!lines[0] || !lines[0].toLowerCase().startsWith('sequence:')) {
     return { error: 'Diagram must start with "sequence:"' };
   }
 
-  const participants = new Set();
-  const elements = []; // Can be messages or fragments
+  const participants = new Map(); // Map of name -> type (participant, actor, etc.)
+  const elements = []; // Can be messages, notes, or fragments
   const fragmentStack = []; // Stack to track nested fragments
+  let title = null;
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
+
+    // Check for title
+    const titleMatch = line.match(/^title\s+(.+)$/i);
+    if (titleMatch) {
+      title = titleMatch[1].replace(/\\n/g, '\n');
+      continue;
+    }
+
+    // Check for participant declarations
+    const participantMatch = line.match(/^(participant|actor|boundary|control|entity|database)\s+(.+)$/i);
+    if (participantMatch) {
+      const type = participantMatch[1].toLowerCase();
+      const name = participantMatch[2].trim();
+      participants.set(name, type);
+      continue;
+    }
+
+    // Check for notes
+    const noteOverMatch = line.match(/^note\s+over\s+(.+?):\s*(.+)$/i);
+    if (noteOverMatch) {
+      const participantList = noteOverMatch[1].split(',').map(p => p.trim());
+      const noteText = noteOverMatch[2].replace(/\\n/g, '\n');
+
+      // Add participants if not already declared
+      participantList.forEach(p => {
+        if (!participants.has(p)) {
+          participants.set(p, 'participant');
+        }
+      });
+
+      const note = {
+        type: 'note',
+        position: 'over',
+        participants: participantList,
+        text: noteText
+      };
+
+      // Add to current context (fragment or root)
+      if (fragmentStack.length > 0) {
+        const currentFragment = fragmentStack[fragmentStack.length - 1];
+        if (currentFragment.currentAlt) {
+          currentFragment.currentAlt.elements.push(note);
+        } else {
+          currentFragment.elements.push(note);
+        }
+      } else {
+        elements.push(note);
+      }
+      continue;
+    }
+
+    const notePositionMatch = line.match(/^note\s+(left|right)\s+of\s+(.+?):\s*(.+)$/i);
+    if (notePositionMatch) {
+      const position = notePositionMatch[1].toLowerCase();
+      const participant = notePositionMatch[2].trim();
+      const noteText = notePositionMatch[3].replace(/\\n/g, '\n');
+
+      // Add participant if not already declared
+      if (!participants.has(participant)) {
+        participants.set(participant, 'participant');
+      }
+
+      const note = {
+        type: 'note',
+        position: position,
+        participants: [participant],
+        text: noteText
+      };
+
+      // Add to current context (fragment or root)
+      if (fragmentStack.length > 0) {
+        const currentFragment = fragmentStack[fragmentStack.length - 1];
+        if (currentFragment.currentAlt) {
+          currentFragment.currentAlt.elements.push(note);
+        } else {
+          currentFragment.elements.push(note);
+        }
+      } else {
+        elements.push(note);
+      }
+      continue;
+    }
 
     // Check for fragment start (loop, alt, opt, par, break, strict, seq, critical)
     const fragmentMatch = line.match(/^(loop|alt|opt|par|break|strict|seq|critical)(?:\s+\[(.+)\])?$/i);
@@ -94,21 +182,27 @@ export function parseSequenceDiagram(text) {
       continue;
     }
 
-    // Match message: Actor -> Server: Message, Actor --> Server: Message, Actor ->> Server: Message
-    const messageMatch = line.match(/^(.+?)\s*(-->?|->?>)\s*(.+?):\s*(.+)$/);
+    // Match message: Actor->Server:Message (compact) or Actor -> Server: Message (spaced)
+    // Support both websequencediagrams.com compact syntax and spaced syntax
+    const messageMatch = line.match(/^(.+?)\s*(--?>|->?>|<<--?|<--?)\s*(.+?):\s*(.+)$/);
     if (messageMatch) {
       const [, from, arrow, to, message] = messageMatch;
       const fromTrimmed = from.trim();
       const toTrimmed = to.trim();
 
-      participants.add(fromTrimmed);
-      participants.add(toTrimmed);
+      // Add participants if not already declared
+      if (!participants.has(fromTrimmed)) {
+        participants.set(fromTrimmed, 'participant');
+      }
+      if (!participants.has(toTrimmed)) {
+        participants.set(toTrimmed, 'participant');
+      }
 
       // Determine message type based on arrow
       let messageType = 'sync'; // Default synchronous
-      if (arrow === '-->') {
+      if (arrow === '-->' || arrow === '<--') {
         messageType = 'response';
-      } else if (arrow === '->>') {
+      } else if (arrow === '->>' || arrow === '<<--') {
         messageType = 'async';
       }
 
@@ -116,7 +210,7 @@ export function parseSequenceDiagram(text) {
         type: 'message',
         from: fromTrimmed,
         to: toTrimmed,
-        message: message.trim(),
+        message: message.trim().replace(/\\n/g, '\n'),
         messageType: messageType,
         isSelfMessage: fromTrimmed === toTrimmed
       };
@@ -139,8 +233,15 @@ export function parseSequenceDiagram(text) {
     return { error: `Unclosed fragment: '${fragmentStack[fragmentStack.length - 1].kind}' (missing 'end')` };
   }
 
+  // Convert participants Map to array with type info
+  const participantList = Array.from(participants.entries()).map(([name, type]) => ({
+    name,
+    type
+  }));
+
   return {
-    participants: Array.from(participants),
+    title,
+    participants: participantList,
     elements
   };
 }

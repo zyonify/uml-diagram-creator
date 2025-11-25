@@ -1,8 +1,8 @@
 {
   "name": "uml-diagram-creator",
   "private": true,
-  "version": "1.0.0",
-  "description": "Free text-based UML diagram creator with export functionality",
+  "version": "1.5.0",
+  "description": "Free text-based UML diagram creator with websequencediagrams.com syntax support and export functionality",
   "type": "module",
   "scripts": {
     "dev": "vite",

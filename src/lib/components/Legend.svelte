@@ -23,22 +23,41 @@
         <!-- Sequence Diagrams -->
         <section>
           <h3>Sequence Diagrams</h3>
+          <p><em>Compatible with websequencediagrams.com syntax</em></p>
+
+          <h4>Basic Structure</h4>
+          <ul>
+            <li><strong>Title</strong>: <code>title My Diagram</code> - Add a title to the diagram</li>
+            <li><strong>Participant</strong>: <code>participant Name</code> - Declare a participant (box)</li>
+            <li><strong>Actor</strong>: <code>actor Name</code> - Declare an actor (stick figure)</li>
+          </ul>
 
           <h4>Message Types (UML 2.5 Standard)</h4>
           <ul>
-            <li><strong>Synchronous call</strong> <code>-&gt;</code> = Solid line with filled arrowhead (caller waits for response)</li>
+            <li><strong>Synchronous call</strong> <code>-&gt;</code> or <code>A-&gt;B:</code> = Solid line with filled arrowhead (caller waits for response)</li>
             <li><strong>Asynchronous call</strong> <code>-&gt;&gt;</code> = Solid line with open arrowhead (caller doesn't wait)</li>
             <li><strong>Return/Response</strong> <code>--&gt;</code> = Dashed line with open arrowhead (returning data)</li>
             <li><strong>Self-message</strong> <code>A -&gt; A: Message</code> = Message to same participant (loops back)</li>
           </ul>
 
+          <h4>Notes</h4>
+          <ul>
+            <li><code>note left of Actor: Text</code> - Note to the left</li>
+            <li><code>note right of Actor: Text</code> - Note to the right</li>
+            <li><code>note over Actor: Text</code> - Note over participant</li>
+            <li><code>note over A, B: Text</code> - Note spanning multiple participants</li>
+          </ul>
+
           <div class="example">
             <strong>Example:</strong>
             <pre>sequence:
-  Client -> Server: Sync Request
-  Client ->> Queue: Async Message
-  Server -> Server: Process Data
-  Server --> Client: Response</pre>
+  title Login System
+  actor User
+  participant Server
+
+  User-&gt;Server: Login Request
+  note over Server: Validates credentials
+  Server--&gt;User: Success</pre>
           </div>
 
           <h4>Control Structures (Combined Fragments)</h4>
